@@ -21,6 +21,15 @@ h1{text-align:center;color:#f5e8bd;font-size:25px;margin:7px}
  display:grid;grid-template-columns:repeat(4,1fr);
  gap:7px;margin-bottom:10px
 }
+.shift-panel{
+ display:grid;grid-template-columns:auto auto 1fr;
+ align-items:center;gap:8px;
+ background:#354a40;border:1px solid #69816d;
+ border-radius:9px;padding:8px 10px;margin-bottom:10px;
+ color:#e4e8d4;font-size:12px
+}
+.shift-panel b{color:#ffdf9c;font-size:14px}
+#eventStatus{color:#f4d28b;text-align:right}
 .stat{
  background:#405b50;border:2px solid #69816d;
  border-radius:9px;padding:9px;text-align:center;
@@ -86,6 +95,12 @@ button:focus-visible{outline:3px solid #ffdf9c;outline-offset:3px}
 .dialog p{font-size:14px;line-height:1.8}
 .dialog button{font-size:14px;margin:4px}
 .options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.skill-controls{display:grid;gap:10px;margin:12px 0}
+.skill-controls input[type="range"]{width:100%;accent-color:#527b5b}
+.skill-controls button,.options button{min-height:44px}
+.mini-progress{font-size:13px;font-weight:bold;color:#54775b}
+.pulse-heart{font-size:44px;animation:heartbeat .8s infinite}
+@keyframes heartbeat{50%{transform:scale(1.2)}}
 .hidden{display:none!important}
 @media(max-width:500px){
  .app{padding:7px}
@@ -93,6 +108,9 @@ button:focus-visible{outline:3px solid #ffdf9c;outline-offset:3px}
  .sub{margin-bottom:8px}
  .stat{padding:7px 2px;font-size:10px}
  .stat b{font-size:17px}
+ .shift-panel{grid-template-columns:auto auto 1fr;gap:5px;padding:7px 5px;font-size:10px}
+ .shift-panel b{font-size:12px}
+ #eventStatus{font-size:10px}
  .bottom{gap:7px}
  .pad{grid-template-columns:repeat(3,57px);gap:4px}
  .pad button{height:57px}
@@ -115,11 +133,17 @@ button:focus-visible{outline:3px solid #ffdf9c;outline-offset:3px}
  <div class="stat">🕒 퇴근까지<b id="time">90초</b></div>
 </div>
 
+<div class="shift-panel">
+ <div>🔥 콤보 <b id="combo">0</b></div>
+ <div>🎯 목표 <b id="goalProgress">0/3</b></div>
+ <div id="eventStatus" aria-live="polite">출근하면 긴급 호출이 시작돼요.</div>
+</div>
+
 <div class="screen">
  <canvas id="game" width="800" height="600" aria-label="병동 게임 화면. 방향키 또는 WASD로 이동하고 환자 가까이에서 E 키로 간호합니다."></canvas>
 </div>
 
-<div class="mission" id="mission">
+<div class="mission" id="mission" aria-live="polite">
  오늘도 출근 완료! 환자들이 하영이를 기다리고 있어요.
 </div>
 
@@ -152,9 +176,9 @@ button:focus-visible{outline:3px solid #ffdf9c;outline-offset:3px}
   <h2 id="dialogTitle">🌷 하영이의 첫 출근</h2>
   <p id="dialogText">
    여기는 하영이가 근무하는 작은 병동이에요.<br><br>
-   환자들의 말에 귀 기울이고, 필요한 간호를 해주세요.<br>
-   환자들이 가끔 징징대기도 하지만 너무 걱정하지 마세요!<br><br>
-   오늘도 무사히 퇴근할 수 있을까요? 🥹
+   환자 요청을 처리하고 콤보를 이어가 보세요.<br>
+   긴급 호출은 제한 시간 안에, 보급 상자는 가까이 가서 획득하세요.<br>
+   오늘의 목표는 간호 업무 3건 완료예요! 🥹
   </p>
   <button id="dialogStart" style="background:#527b5b;width:100%">출근하기 🌿</button>
  </div>
@@ -167,11 +191,17 @@ const $=id=>document.getElementById(id);
 
 const W=800,H=600;
 const INTERACTION_DISTANCE=100;
+const DAILY_GOAL=3;
 let running=false,score=0,level=1,money=0,time=90;
 let raf=0,timer=null,last=0;
 let audio=null,musicTimer=null,musicOn=true,musicIndex=0;
 let uniform=0,wardLevel=1,completed=0;
-let bubbleTimer=0,activeBubble=null;
+let combo=0,bestCombo=0,dailyGoalReached=false;
+let urgentPatient=null,urgentDeadline=0,nextUrgentAt=0,urgentCompleted=0;
+let activeSupply=null,nextSupplyAt=0,suppliesCollected=0;
+let eventMessage="",eventMessageUntil=0;
+let miniGameOpen=false,lastEventUpdate=Date.now(),activeMiniGame=null;
+let activeBubble=null;
 let dialogueCooldown=0;
 const keys={};
 
@@ -466,6 +496,12 @@ function draw(){
    box(p.x+42,p.y-62,20,20,"#8ab38b");
    label("✓",p.x+52,p.y-47,16,"white");
   }
+  if(p===urgentPatient&&!p.done){
+   ctx.strokeStyle="#d35e58";
+   ctx.lineWidth=4;
+   ctx.strokeRect(p.x-81,p.y-80,162,130);
+   label("🚨",p.x,p.y-91,22,"#c84c4c");
+  }
  });
 
  // 중앙 간호사 카트
@@ -478,6 +514,17 @@ function draw(){
  box(387,350,8,8,"#e5b6a6");
  box(405,350,8,8,"#9ec8d2");
  label("간호 카트",400,420,12,"#655d4c");
+
+ if(activeSupply){
+  ctx.fillStyle="rgba(255,215,120,.25)";
+  ctx.beginPath();
+  ctx.arc(activeSupply.x,activeSupply.y-8,25,0,Math.PI*2);
+  ctx.fill();
+  box(activeSupply.x-13,activeSupply.y-19,26,23,"#a87545");
+  box(activeSupply.x-15,activeSupply.y-23,30,7,"#d4ad6f");
+  box(activeSupply.x-3,activeSupply.y-23,6,27,"#f0d99c");
+  label("📦",activeSupply.x,activeSupply.y-35,17,"#fff");
+ }
 
  // 하영이와 상호작용
  const p=nearest();
@@ -549,9 +596,102 @@ function nearest(){
  return best;
 }
 
+function updateStats(){
+ level=Math.floor(score/200)+1;
+ $("score").textContent=score;
+ $("level").textContent=level;
+ $("money").textContent=money.toLocaleString();
+ $("combo").textContent=combo;
+ $("goalProgress").textContent=Math.min(completed,DAILY_GOAL)+"/"+DAILY_GOAL;
+}
+
+function setEventMessage(message,duration=4500){
+ eventMessage=message;
+ eventMessageUntil=Date.now()+duration;
+ updateShiftPanel();
+}
+
+function updateShiftPanel(now=Date.now()){
+ $("combo").textContent=combo;
+ $("goalProgress").textContent=Math.min(completed,DAILY_GOAL)+"/"+DAILY_GOAL;
+ const status=$("eventStatus");
+ if(running&&urgentPatient){
+  const seconds=Math.max(0,Math.ceil((urgentDeadline-now)/1000));
+  status.textContent="🚨 "+urgentPatient.name+" 긴급 호출 · "+seconds+"초";
+ }else if(running&&activeSupply){
+  const seconds=Math.max(0,Math.ceil((activeSupply.expiresAt-now)/1000));
+  status.textContent="📦 보급 상자 · "+seconds+"초 남음";
+ }else if(now<eventMessageUntil){
+  status.textContent=eventMessage;
+ }else if(running&&nextUrgentAt){
+  const seconds=Math.max(0,Math.ceil((nextUrgentAt-now)/1000));
+  status.textContent="다음 긴급 호출까지 "+seconds+"초";
+ }else{
+  status.textContent=running?"모든 환자 업무를 완료했어요!":"출근하면 긴급 호출이 시작돼요.";
+ }
+}
+
+function updateEvents(now){
+ const elapsed=Math.max(0,now-lastEventUpdate);
+ lastEventUpdate=now;
+ if(miniGameOpen){
+  if(urgentPatient)urgentDeadline+=elapsed;
+  if(activeSupply)activeSupply.expiresAt+=elapsed;
+  if(nextUrgentAt)nextUrgentAt+=elapsed;
+  if(nextSupplyAt)nextSupplyAt+=elapsed;
+  if(eventMessageUntil)eventMessageUntil+=elapsed;
+  return;
+ }
+ let missionChanged=false;
+ if(urgentPatient&&now>=urgentDeadline){
+  const missed=urgentPatient;
+  urgentPatient=null;
+  nextUrgentAt=now+12000+Math.random()*8000;
+  setEventMessage("⏰ "+missed.name+"의 긴급 호출 시간이 지났어요. 다음 기회에 도전해요!");
+  missionChanged=true;
+ }
+ if(!urgentPatient&&nextUrgentAt&&now>=nextUrgentAt){
+  const available=patients.filter(p=>!p.done);
+  if(available.length){
+   urgentPatient=available[Math.floor(Math.random()*available.length)];
+   urgentDeadline=now+11000;
+   setEventMessage("🚨 "+urgentPatient.name+"에게 긴급 호출이 왔어요!");
+   missionChanged=true;
+  }else nextUrgentAt=0;
+ }
+ if(activeSupply&&now>=activeSupply.expiresAt){
+  activeSupply=null;
+  nextSupplyAt=now+8000;
+  setEventMessage("📦 보급 상자가 사라졌어요. 다음 상자를 기다려 주세요.");
+ }
+ if(!activeSupply&&nextSupplyAt&&now>=nextSupplyAt){
+  const spots=[{x:270,y:270},{x:530,y:270},{x:270,y:520},{x:530,y:520}];
+  const spot=spots[Math.floor(Math.random()*spots.length)];
+  activeSupply={x:spot.x,y:spot.y,expiresAt:now+18000};
+  nextSupplyAt=0;
+  setEventMessage("📦 병동에 보급 상자가 도착했어요. 가까이 가서 획득하세요!");
+ }
+ if(missionChanged)updateMission();
+}
+
+function collectSupply(){
+ if(!activeSupply||Math.hypot(activeSupply.x-nurse.x,activeSupply.y-nurse.y)>38)return;
+ activeSupply=null;
+ suppliesCollected++;
+ score+=75;
+ money+=5000;
+ nextSupplyAt=Date.now()+18000;
+ updateStats();
+ setEventMessage("🎁 보급품 획득! +75점 · 월급 5,000원");
+ tone(760,.16,.04);
+}
+
 function updateMission(){
  const p=nearest();
- if(p){
+ if(urgentPatient){
+  const seconds=Math.max(0,Math.ceil((urgentDeadline-Date.now())/1000));
+  $("mission").innerHTML="🚨 <strong>긴급 호출: "+urgentPatient.name+"</strong><br>"+urgentPatient.task+" · "+seconds+"초 안에 도와주세요!";
+ }else if(p){
   $("mission").innerHTML="💬 <strong>"+p.name+"</strong>: 저 좀 봐주세요~!<br>오늘의 간호: "+p.task+" · 간호하기를 눌러주세요.";
  }else{
   $("mission").innerHTML="🌿 병동을 돌아다니며 환자들의 상태를 살펴보세요. 환자들이 하영이를 찾고 있어요!";
@@ -560,60 +700,157 @@ function updateMission(){
 
 // ----- 간호 미니게임 -----
 function miniGame(p){
+ if(miniGameOpen)return;
+ miniGameOpen=true;
  const d=document.createElement("div");
  d.className="overlay";
- const qs={
-  temp:["정상 성인의 일반적인 체온은?",["36.5~37.5℃","34~35℃","39~40℃"],0],
-  bp:["일반적인 성인의 정상 혈압에 가까운 것은?",["120/80 mmHg","180/110 mmHg","80/40 mmHg"],0],
-  pulse:["성인의 안정 시 일반적인 맥박은?",["60~100회/분","120~160회/분","30~40회/분"],0],
-  iv:["수액을 확인할 때 중요한 것은?",["처방·속도·주입부위","색깔만 확인","환자 나이만 확인"],0],
-  med:["투약 전 확인해야 할 기본 원칙은?",["대상자·약물·용량·경로·시간","약 색깔만 확인","다른 환자 약 사용"],0]
- };
- const q=qs[p.type];
+ activeMiniGame=d;
+ const titles={temp:"🌡️ 체온 측정",bp:"🩺 혈압 확인",pulse:"💓 맥박 리듬",iv:"💧 수액 점검",med:"💊 투약 안전"};
  d.innerHTML=`
  <div class="dialog">
- <h2>${p.type==="med"?"💊 약물 투여":"🩺 간호 사정"}</h2>
+ <h2>${titles[p.type]}</h2>
  <p>${p.name}: 간호사님, 이것 좀 해주세요! 🥺</p>
- <p><strong>${q[0]}</strong></p>
- <div class="options" id="opts"></div>
- <p class="small">간호 지식을 활용해 정답을 선택하세요.</p>
+ <div id="gameContent"></div>
+ <p class="small">이 미니게임은 게임용 단순화 표현이며, 실제 간호 판단을 대신하지 않아요.</p>
+ <button id="leaveMiniGame">나중에 하기</button>
  </div>`;
  document.body.appendChild(d);
+ const content=d.querySelector("#gameContent");
+ const leave=()=>{d.remove();miniGameOpen=false;activeMiniGame=null;};
+ const wrong=message=>{
+  score=Math.max(0,score-30);
+  combo=0;
+  updateStats();
+  setEventMessage("🥲 "+message+" · 30점 감점");
+  tone(170,.3,.05);
+ };
+ const complete=()=>{
+  const urgent=urgentPatient===p&&Date.now()<urgentDeadline;
+  d.remove();
+  miniGameOpen=false;
+  activeMiniGame=null;
+  p.done=true;
+  completed++;
+  combo++;
+  bestCombo=Math.max(bestCombo,combo);
+  const comboBonus=Math.max(0,combo-1)*25;
+  const urgentBonus=urgent?50:0;
+  score+=100+comboBonus+urgentBonus;
+  money+=10000+(urgent?5000:0);
+  if(urgent){
+   urgentPatient=null;
+   urgentCompleted++;
+   nextUrgentAt=Date.now()+12000+Math.random()*8000;
+  }
+  let goalBonus=0;
+  if(completed>=DAILY_GOAL&&!dailyGoalReached){
+   dailyGoalReached=true;
+   goalBonus=20000;
+   money+=goalBonus;
+  }
+  updateStats();
+  tone(880,.2,.05);
+  const story=completed===1
+   ?"첫 환자가 고맙다며 웃어줬어요. 좋은 하루의 시작이에요!"
+   :completed===DAILY_GOAL
+    ?"동료들이 하영이를 믿기 시작했어요. 오늘의 목표 달성!"
+    :completed===patients.length
+     ?"병동이 한결 평온해졌어요. 오늘의 근무를 훌륭하게 마쳤어요!"
+     :"환자와 동료들의 표정이 한결 밝아졌어요.";
+  $("mission").innerHTML="💗 <strong>"+p.name+": 고마워요, 간호사님!</strong><br>"+story;
+  const rewards=["간호 업무 완료! +100점"];
+  if(comboBonus)rewards.push("콤보 보너스 +"+comboBonus+"점");
+  if(urgentBonus)rewards.push("긴급 호출 보너스 +"+urgentBonus+"점");
+  if(goalBonus)rewards.push("목표 달성 +"+goalBonus.toLocaleString()+"원");
+  if(urgentPatient===p){
+   urgentPatient=null;
+   nextUrgentAt=Date.now()+12000+Math.random()*8000;
+  }
+  setEventMessage(rewards.join(" · "));
+  updateShiftPanel();
+  draw();
+  if(patients.every(v=>v.done))finish(true);
+ };
 
- q[1].forEach((a,i)=>{
-  const b=document.createElement("button");
-  b.textContent=a;
-  b.onclick=()=>{
-   if(i===q[2]){
-    d.remove();
-    p.done=true;
-    completed++;
-    score+=100;
-    money+=10000;
-    level=Math.floor(score/200)+1;
-    $("score").textContent=score;
-    $("money").textContent=money.toLocaleString();
-    $("level").textContent=level;
-    tone(880,.2,.05);
-    $("mission").innerHTML="💗 <strong>"+p.name+": 고마워요, 간호사님!</strong><br>간호 업무 완료! +100점 · 월급 10,000원";
-    draw();
-    if(patients.every(v=>v.done))finish(true);
+ d.querySelector("#leaveMiniGame").onclick=leave;
+ if(p.type==="temp"){
+  content.innerHTML=`
+   <p><strong>체온계를 조절해 정상 범위의 수치를 찾아보세요.</strong></p>
+   <div class="skill-controls">
+    <label for="tempValue">체온: <output id="tempDisplay">36.0℃</output></label>
+    <input id="tempValue" type="range" min="34" max="40" step="0.1" value="36" aria-label="체온 조절">
+    <button id="checkTemp">측정 완료</button>
+   </div>`;
+  const value=content.querySelector("#tempValue");
+  const display=content.querySelector("#tempDisplay");
+  value.oninput=()=>display.textContent=Number(value.value).toFixed(1)+"℃";
+  content.querySelector("#checkTemp").onclick=()=>{
+   if(Number(value.value)>=36.5&&Number(value.value)<=37.5)complete();
+   else wrong("정상 범위를 다시 확인해 보세요.");
+  };
+ }else if(p.type==="pulse"){
+  content.innerHTML=`
+   <p><strong>박자 버튼을 0.3~1초 간격으로 네 번 눌러 보세요.</strong></p>
+   <div class="skill-controls">
+    <div class="pulse-heart" aria-hidden="true">♥</div>
+    <div class="mini-progress" id="pulseProgress">박자 0/4</div>
+    <button id="pulseTap">박자 맞추기</button>
+   </div>`;
+  let taps=0,lastTap=0;
+  content.querySelector("#pulseTap").onclick=()=>{
+   const now=performance.now();
+   if(lastTap&&((now-lastTap)<300||(now-lastTap)>1000)){
+    wrong("박자 간격이 너무 빠르거나 느려요. 처음부터 다시 해보세요.");
+    taps=0;
+    lastTap=0;
    }else{
-    score=Math.max(0,score-30);
-    level=Math.floor(score/200)+1;
-    $("score").textContent=score;
-    $("level").textContent=level;
-    b.style.background="#b95c69";
-    $("mission").innerHTML="🥲 <strong>앗, 다시 공부해 봐요!</strong><br>30점 감점되었어요.";
-    tone(170,.3,.05);
+    taps++;
+    lastTap=now;
+    content.querySelector("#pulseProgress").textContent="박자 "+taps+"/4";
+    if(taps>=4)complete();
    }
   };
-  d.querySelector("#opts").appendChild(b);
- });
+ }else if(p.type==="iv"){
+  const steps=["처방 확인","주입 속도 확인","주입 부위 확인"];
+  content.innerHTML=`
+   <p><strong>게임 속 수액 점검 순서에 맞춰 세 항목을 선택하세요.</strong></p>
+   <div class="skill-controls">
+    <div class="mini-progress" id="ivProgress">점검 0/3</div>
+    <div class="options" id="ivOptions"></div>
+   </div>`;
+  let step=0;
+  steps.forEach((text,index)=>{
+   const button=document.createElement("button");
+   button.textContent=text;
+   button.onclick=()=>{
+    if(index!==step){
+     wrong("점검 순서가 달라요. 순서를 다시 확인해 보세요.");
+     step=0;
+     content.querySelector("#ivProgress").textContent="점검 0/3";
+     return;
+    }
+    step++;
+    content.querySelector("#ivProgress").textContent="점검 "+step+"/3";
+    if(step===steps.length)complete();
+   };
+   content.querySelector("#ivOptions").appendChild(button);
+  });
+ }else{
+  const q=p.type==="med"
+   ?["투약 전 기본 확인 원칙으로 알맞은 것은?",["대상자·약물·용량·경로·시간 확인","약 색깔만 확인","다른 환자 약 사용"],0]
+   :["일반적인 성인의 정상 혈압에 가까운 것은?",["120/80 mmHg","180/110 mmHg","80/40 mmHg"],0];
+  content.innerHTML=`<p><strong>${q[0]}</strong></p><div class="options" id="opts"></div>`;
+  q[1].forEach((answer,index)=>{
+   const button=document.createElement("button");
+   button.textContent=answer;
+   button.onclick=()=>index===q[2]?complete():wrong("다시 생각해 보세요.");
+   content.querySelector("#opts").appendChild(button);
+  });
+ }
 }
 
 function interact(){
- if(!running)return;
+ if(!running||miniGameOpen)return;
  const p=nearest();
  if(!p){
   $("mission").innerHTML="🔍 <strong>조금 더 가까이 가보세요!</strong><br>환자 침대 옆으로 이동해 주세요.";
@@ -695,6 +932,7 @@ $("salary").onclick=salary;
 
 // ----- 이동 -----
 function move(){
+ if(!running||miniGameOpen)return;
  let dx=0,dy=0;
  if(keys.left)dx=-1;
  if(keys.right)dx=1;
@@ -710,10 +948,12 @@ function loop(now){
  if(!running)return;
  const dt=Math.min((now-last)/16.67,2);
  last=now;
+ updateEvents(Date.now());
  const speed=nurse.speed;
  nurse.speed=3.6*dt;
  move();
  nurse.speed=speed;
+ collectSupply();
 
  // 가끔 하영이 속마음 등장
  if(Date.now()>dialogueCooldown && Math.random()<.0015){
@@ -731,13 +971,25 @@ function finish(all=false){
  cancelAnimationFrame(raf);
  clearInterval(timer);
  musicStop();
+ if(activeMiniGame)activeMiniGame.remove();
+ activeMiniGame=null;
  const bonus=all?50000:0;
  money+=bonus;
- $("money").textContent=money.toLocaleString();
+ urgentPatient=null;
+ activeSupply=null;
+ nextUrgentAt=0;
+ nextSupplyAt=0;
+ miniGameOpen=false;
+ updateStats();
  $("dialogTitle").textContent=all?"🌷 오늘의 간호왕!":"🌙 퇴근이다!";
  $("dialogText").innerHTML=
  (all?"수간호사: 하영 간호사! 오늘 완벽했어요! 💗":"하영이: 드디어 퇴근이다... 살았다... 🥹")+
- "<br><br>오늘의 점수: "+score+"점<br>완료 업무: "+completed+"개<br>퇴근 보너스: "+bonus.toLocaleString()+"원<br>총 월급: "+money.toLocaleString()+"원";
+ "<br><br>오늘의 점수: "+score+"점<br>완료 업무: "+completed+"개<br>최고 콤보: "+bestCombo+
+ "<br>긴급 호출 성공: "+urgentCompleted+"회<br>보급품 획득: "+suppliesCollected+"개"+
+ "<br>오늘의 목표: "+(dailyGoalReached?"달성":"미달성")+
+ "<br>퇴근 보너스: "+bonus.toLocaleString()+"원<br>총 월급: "+money.toLocaleString()+"원";
+ setEventMessage("근무가 종료됐어요. 오늘도 수고했어요!",10000);
+ updateShiftPanel();
  $("dialogStart").textContent="다시 출근하기";
  $("overlay").classList.remove("hidden");
 }
@@ -750,15 +1002,22 @@ function start(){
  patients.forEach(p=>p.done=false);
  nurse.x=400;nurse.y=485;
  score=0;level=1;time=90;completed=0;
+ combo=0;bestCombo=0;dailyGoalReached=false;
+ urgentPatient=null;urgentDeadline=0;urgentCompleted=0;
+ activeSupply=null;suppliesCollected=0;
+ nextUrgentAt=Date.now()+7000+Math.random()*4000;
+ nextSupplyAt=Date.now()+10000+Math.random()*5000;
+ eventMessage="출근했어요! 병동을 살펴보세요.";
+ eventMessageUntil=Date.now()+4000;
+ miniGameOpen=false;lastEventUpdate=Date.now();
  activeBubble=null;dialogueCooldown=0;
- $("score").textContent=0;
- $("level").textContent=1;
+ updateStats();
  $("time").textContent="90초";
- $("money").textContent=money.toLocaleString();
  running=true;
  last=performance.now();
  $("overlay").classList.add("hidden");
  updateMission();
+ updateShiftPanel();
  draw();
  musicStart();
  raf=requestAnimationFrame(loop);
@@ -766,6 +1025,7 @@ function start(){
   if(!running)return;
   time--;
   $("time").textContent=time+"초";
+  updateShiftPanel();
   if(time<=0)finish();
  },1000);
 }
