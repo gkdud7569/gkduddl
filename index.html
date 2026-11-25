@@ -1,1072 +1,384 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#273b38">
-<title>하영이 간호사 키우기</title>
-<style>
-*{box-sizing:border-box}
-body{
- margin:0;background:#273b38;color:#fff;
- font-family:Arial,sans-serif;
- display:flex;justify-content:center;
- min-height:100dvh;
-}
-.app{width:100%;max-width:1000px;padding:12px}
-h1{text-align:center;color:#f5e8bd;font-size:25px;margin:7px}
-.sub{text-align:center;color:#d5d9bd;font-size:12px;margin-bottom:12px}
-.stats{
- display:grid;grid-template-columns:repeat(4,1fr);
- gap:7px;margin-bottom:10px
-}
-.shift-panel{
- display:grid;grid-template-columns:auto auto 1fr;
- align-items:center;gap:8px;
- background:#354a40;border:1px solid #69816d;
- border-radius:9px;padding:8px 10px;margin-bottom:10px;
- color:#e4e8d4;font-size:12px
-}
-.shift-panel b{color:#ffdf9c;font-size:14px}
-#eventStatus{color:#f4d28b;text-align:right}
-.stat{
- background:#405b50;border:2px solid #69816d;
- border-radius:9px;padding:9px;text-align:center;
- font-size:12px;color:#e4e8d4
-}
-.stat b{display:block;color:#ffdf9c;font-size:19px;margin-top:4px}
-.screen{
- position:relative;width:100%;
- background:#d9e5c8;border:5px solid #627e69;
- border-radius:10px;overflow:hidden;
- box-shadow:0 7px 20px #101b1680
-}
-canvas{
- display:block;width:100%;height:auto;
- image-rendering:pixelated;touch-action:none
-}
-.mission{
- background:#405b50;border:2px solid #69816d;
- border-radius:10px;padding:12px;margin-top:10px;
- font-size:14px;line-height:1.6;min-height:55px
-}
-.mission strong{color:#ffdf9c}
-.bottom{
- display:flex;justify-content:space-between;
- align-items:center;gap:15px;margin-top:12px
-}
-.pad{
- display:grid;grid-template-columns:repeat(3,64px);
- gap:5px
-}
-button{
- border:2px solid #81917a;border-radius:12px;
- background:#587461;color:#fff;font-size:21px;
- font-weight:bold;padding:12px;
- box-shadow:0 4px #304d3c;
- touch-action:none;user-select:none;
- -webkit-tap-highlight-color:transparent
-}
-button:active{transform:translateY(3px);box-shadow:0 1px #304d3c;background:#78966d}
-button:focus-visible{outline:3px solid #ffdf9c;outline-offset:3px}
-.pad button{height:58px;padding:4px;font-size:27px}
-.blank{visibility:hidden}
-.actions{display:flex;flex:1;gap:7px;justify-content:flex-end}
-.actions button{flex:1;font-size:14px;min-height:57px}
-.green{background:#477f69}
-.pink{background:#a66e79}
-.menu{display:flex;gap:7px;margin-top:10px}
-.menu button{flex:1;font-size:13px;padding:11px 3px;background:#405b50}
-.note{text-align:center;color:#c4d2c2;font-size:11px;margin:12px}
-.overlay{
- position:fixed;inset:0;background:#15231fd9;
- display:flex;align-items:center;justify-content:center;
- z-index:10;padding:15px
-}
-.dialog{
- background:#f2e8d2;color:#485648;
- border:5px solid #9d9a70;border-radius:14px;
- padding:24px;width:100%;max-width:410px;
- text-align:center;max-height:90vh;overflow:auto;
- box-shadow:0 10px 30px #0008
-}
-.dialog h2{color:#54775b}
-.dialog p{font-size:14px;line-height:1.8}
-.dialog button{font-size:14px;margin:4px}
-.options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.skill-controls{display:grid;gap:10px;margin:12px 0}
-.skill-controls input[type="range"]{width:100%;accent-color:#527b5b}
-.skill-controls button,.options button{min-height:44px}
-.mini-progress{font-size:13px;font-weight:bold;color:#54775b}
-.pulse-heart{font-size:44px;animation:heartbeat .8s infinite}
-@keyframes heartbeat{50%{transform:scale(1.2)}}
-.hidden{display:none!important}
-@media(max-width:500px){
- .app{padding:7px}
- h1{font-size:21px}
- .sub{margin-bottom:8px}
- .stat{padding:7px 2px;font-size:10px}
- .stat b{font-size:17px}
- .shift-panel{grid-template-columns:auto auto 1fr;gap:5px;padding:7px 5px;font-size:10px}
- .shift-panel b{font-size:12px}
- #eventStatus{font-size:10px}
- .bottom{gap:7px}
- .pad{grid-template-columns:repeat(3,57px);gap:4px}
- .pad button{height:57px}
- .actions{gap:5px}
- .actions button{font-size:12px;padding:8px 3px}
- .menu button{font-size:11px}
-}
-</style>
-</head>
-
-<body>
-<div class="app">
-<h1>🌿 하영이 간호사 키우기</h1>
-<div class="sub">A LITTLE NURSE'S DAILY LIFE · 병동에서 살아남기</div>
-
-<div class="stats">
- <div class="stat">⭐ 간호 점수<b id="score">0</b></div>
- <div class="stat">🌷 간호 레벨<b id="level">1</b></div>
- <div class="stat">💰 월급<b id="money">0</b></div>
- <div class="stat">🕒 퇴근까지<b id="time">90초</b></div>
-</div>
-
-<div class="shift-panel">
- <div>🔥 콤보 <b id="combo">0</b></div>
- <div>🎯 목표 <b id="goalProgress">0/3</b></div>
- <div id="eventStatus" aria-live="polite">출근하면 긴급 호출이 시작돼요.</div>
-</div>
-
-<div class="screen">
- <canvas id="game" width="800" height="600" aria-label="병동 게임 화면. 방향키 또는 WASD로 이동하고 환자 가까이에서 E 키로 간호합니다."></canvas>
-</div>
-
-<div class="mission" id="mission" aria-live="polite">
- 오늘도 출근 완료! 환자들이 하영이를 기다리고 있어요.
-</div>
-
-<div class="bottom">
- <div class="pad">
-  <button class="blank"></button>
-  <button data-dir="up" aria-label="위쪽으로 이동">▲</button>
-  <button class="blank"></button>
-  <button data-dir="left" aria-label="왼쪽으로 이동">◀</button>
-  <button data-dir="down" aria-label="아래쪽으로 이동">▼</button>
-  <button data-dir="right" aria-label="오른쪽으로 이동">▶</button>
- </div>
- <div class="actions">
-  <button class="green" id="interact">간호하기</button>
-  <button class="pink" id="music">♫ 음악 ON</button>
- </div>
-</div>
-
-<div class="menu">
- <button id="ward">병동 꾸미기</button>
- <button id="closet">유니폼</button>
- <button id="salary">월급·칭찬</button>
- <button id="start">다시 출근</button>
-</div>
-<div class="note">방향키 / WASD 이동 · E 간호하기 · 환자에게 다가가서 간호해 주세요!</div>
-</div>
-
-<div class="overlay" id="overlay">
- <div class="dialog">
-  <h2 id="dialogTitle">🌷 하영이의 첫 출근</h2>
-  <p id="dialogText">
-   여기는 하영이가 근무하는 작은 병동이에요.<br><br>
-   환자 요청을 처리하고 콤보를 이어가 보세요.<br>
-   긴급 호출은 제한 시간 안에, 보급 상자는 가까이 가서 획득하세요.<br>
-   오늘의 목표는 간호 업무 3건 완료예요! 🥹
-  </p>
-  <button id="dialogStart" style="background:#527b5b;width:100%">출근하기 🌿</button>
- </div>
-</div>
-
-<script>
-const c=document.getElementById("game");
-const ctx=c.getContext("2d");
-const $=id=>document.getElementById(id);
-
-const W=800,H=600;
-const INTERACTION_DISTANCE=100;
-const DAILY_GOAL=3;
-let running=false,score=0,level=1,money=0,time=90;
-let raf=0,timer=null,last=0;
-let audio=null,musicTimer=null,musicOn=true,musicIndex=0;
-let uniform=0,wardLevel=1,completed=0;
-let combo=0,bestCombo=0,dailyGoalReached=false;
-let urgentPatient=null,urgentDeadline=0,nextUrgentAt=0,urgentCompleted=0;
-let activeSupply=null,nextSupplyAt=0,suppliesCollected=0;
-let eventMessage="",eventMessageUntil=0;
-let miniGameOpen=false,lastEventUpdate=Date.now(),activeMiniGame=null;
-let activeBubble=null;
-let dialogueCooldown=0;
-const keys={};
-
-const nurse={
- x:400,y:485,speed:3.6
-};
-
-const uniforms=[
- {name:"민트 간호복",color:"#75c8a9"},
- {name:"핑크 간호복",color:"#e9a5b9"},
- {name:"라벤더 간호복",color:"#b8a5dc"},
- {name:"하늘색 간호복",color:"#8dc9df"},
- {name:"화이트 간호복",color:"#f2eee1"}
-];
-
-const patients=[
- {
-  x:145,y:170,name:"김순자 환자",task:"체온 측정",type:"temp",
-  hair:"#776044",skin:"#e8bd9e",cloth:"#e7a8a0",
-  hairStyle:0,done:false,
-  lines:["물 좀 주세요!","아이고, 허리가 아파요...","언제 집에 가나요?","체온 좀 재주세요~","밥이 조금 싱거워요!"]
- },
- {
-  x:400,y:170,name:"박철수 환자",task:"혈압 측정",type:"bp",
-  hair:"#39312b",skin:"#d9aa83",cloth:"#9db8db",
-  hairStyle:1,done:false,
-  lines:["혈압이 높게 나오면 어떡하죠?","간호사님! 혈압 좀 봐주세요.","심심해서 잠이 안 와요.","TV 채널 좀 바꿔주세요!"]
- },
- {
-  x:655,y:170,name:"이영희 환자",task:"약물 투여",type:"med",
-  hair:"#8c5837",skin:"#efc6a7",cloth:"#dca8c7",
-  hairStyle:2,done:false,
-  lines:["약 먹기 너무 싫어요...","이 약은 무슨 약이에요?","주사 아파요? ㅠㅠ","간호사님 저 무서워요."]
- },
- {
-  x:145,y:355,name:"최민수 환자",task:"맥박 측정",type:"pulse",
-  hair:"#292b32",skin:"#d7a787",cloth:"#a5b9d8",
-  hairStyle:1,done:false,
-  lines:["간호사님~ 저 심심해요!","휴대폰 충전 좀 해주세요.","배가 고파요...","오늘 퇴원할 수 있어요?"]
- },
- {
-  x:655,y:355,name:"정미자 환자",task:"수액 확인",type:"iv",
-  hair:"#b3a18a",skin:"#ecc4a5",cloth:"#bba6db",
-  hairStyle:3,done:false,
-  lines:["수액 다 들어간 것 같은데?","간호사님~ 뭐하세요?","팔이 조금 불편해요.","저녁은 언제 나와요?"]
- }
-];
-
-// ----- 오디오 -----
-function initAudio(){
- if(!audio){
-  const AC=window.AudioContext||window.webkitAudioContext;
-  if(AC)audio=new AC();
- }
- if(audio&&audio.state==="suspended")audio.resume();
-}
-function tone(f,d=.13,v=.025,type="square"){
- if(!audio||!musicOn)return;
- const o=audio.createOscillator(),g=audio.createGain();
- o.type=type;o.frequency.value=f;
- g.gain.setValueAtTime(v,audio.currentTime);
- g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+d);
- o.connect(g);g.connect(audio.destination);
- o.start();o.stop(audio.currentTime+d);
-}
-const melody=[523,659,784,659,587,698,880,698,659,784,988,784,698,880,1046,880,523,659,784,1046];
-function musicStart(){
- if(!musicOn||musicTimer)return;
- musicTimer=setInterval(()=>{
-  if(running){
-   tone(melody[musicIndex],.17,.018,"triangle");
-   musicIndex=(musicIndex+1)%melody.length;
-  }
- },180);
-}
-function musicStop(){
- clearInterval(musicTimer);musicTimer=null;
-}
-$("music").onclick=()=>{
- musicOn=!musicOn;
- $("music").textContent=musicOn?"♫ 음악 ON":"음악 OFF";
- if(musicOn){initAudio();musicStart()}else musicStop();
-};
-
-// ----- 픽셀 아트 도구 -----
-function box(x,y,w,h,color){
- ctx.fillStyle=color;
- ctx.fillRect(Math.round(x),Math.round(y),w,h);
-}
-function line(x,y,w,h,color){box(x,y,w,h,color)}
-function label(t,x,y,size=13,color="#665b4d"){
- ctx.font="bold "+size+"px Arial";
- ctx.textAlign="center";
- ctx.fillStyle=color;
- ctx.fillText(t,x,y);
-}
-
-// ----- 병동 바닥 -----
-function drawFloor(){
- box(0,0,W,H,"#d8e4ca");
- const colors=["#e7e7d0","#dce5c9","#e3e8d0","#d5e0c7"];
- for(let y=0;y<H;y+=40){
-  for(let x=0;x<W;x+=40){
-   box(x,y,39,39,colors[((x/40)+(y/40))%4|0]);
-   box(x,y+38,39,2,"#c3d0b8");
-   box(x+38,y,2,39,"#c3d0b8");
-  }
- }
- // 벽
- box(0,0,W,75,"#c6a98c");
- box(0,68,W,12,"#9f836c");
- box(0,0,W,7,"#e5d3b9");
-
- // 벽 장식
- label("HAPPY HOSPITAL",400,42,23,"#fff2d3");
- label("♡",55,43,23,"#f8d5bd");
- label("♡",745,43,23,"#f8d5bd");
-
- // 창문
- [65,340,615].forEach(x=>{
-  box(x,88,120,94,"#967b61");
-  box(x+5,93,110,84,"#b8e1df");
-  box(x+57,93,5,84,"#fff0d4");
-  box(x+5,132,110,5,"#fff0d4");
-  box(x+5,93,110,5,"#fff0d4");
-  // 커튼
-  box(x-7,85,17,95,"#e8b7b0");
-  box(x+110,85,17,95,"#e8b7b0");
-  box(x+2,85,9,12,"#d99898");
-  box(x+110,85,9,12,"#d99898");
- });
-
- // 벽 시계
- box(750,92,35,35,"#f6e9cf");
- ctx.strokeStyle="#8b826d";ctx.lineWidth=3;
- ctx.beginPath();ctx.arc(767,109,15,0,Math.PI*2);ctx.stroke();
- line(766,98,2,12,"#655e50");
- line(766,109,9,2,"#655e50");
-
- // 바닥 러그
- box(285,430,230,115,"#b9a58b");
- box(292,437,216,101,"#e7d8bd");
- box(300,445,200,85,"#c6b3a1");
- box(315,460,170,55,"#e5d4ba");
- label("NURSE STATION",400,490,15,"#776654");
-
- if(wardLevel>=2){
-  box(305,451,190,3,"#b58770");
-  label("✿",325,477,18,"#c48d86");
-  label("✿",475,477,18,"#c48d86");
- }
- if(wardLevel>=3){
-  label("♡",325,520,18,"#d99d9c");
-  label("♡",475,520,18,"#d99d9c");
- }
-}
-
-// ----- 침대 -----
-function drawBed(p){
- const x=p.x,y=p.y;
- // 침대 그림자와 프레임
- box(x-74,y+31,148,13,"#87958a");
- box(x-70,y-12,140,57,"#a3b5a3");
- box(x-65,y-8,130,46,"#faf2df");
- // 베개
- box(x-58,y-3,38,24,"#fffaf0");
- box(x-56,y-1,34,20,"#eee4d3");
- // 이불
- box(x-17,y-3,79,37,p.cloth);
- box(x-17,y-3,79,6,lighten(p.cloth));
- // 이불 무늬
- for(let i=0;i<4;i++)box(x-10+i*18,y+8,7,5,"#ffffff55");
- // 침대 다리
- box(x-65,y+42,7,15,"#7e8b7d");
- box(x+58,y+42,7,15,"#7e8b7d");
- // 헤드
- box(x-74,y-21,10,65,"#9b9d86");
- box(x+64,y-21,10,65,"#9b9d86");
- // 협탁
- box(x+79,y+3,37,43,"#b9906c");
- box(x+83,y+8,29,8,"#d8b48b");
- box(x+83,y+27,29,14,"#9c7859");
- box(x+89,y+30,5,4,"#e7d4ad");
- // 수액 거치대
- box(x-88,y-62,4,70,"#899b92");
- box(x-96,y-65,20,4,"#899b92");
- box(x-97,y-59,21,24,"#d2e8df");
- box(x-91,y-54,9,13,"#a2d2db");
- box(x-90,y-35,2,35,"#a0aaa0");
- // 작은 식물
- box(x+88,y-22,20,22,"#c58e70");
- box(x+95,y-39,5,19,"#6d9b72");
- box(x+87,y-34,10,9,"#78a97c");
- box(x+99,y-36,10,9,"#83ad76");
-}
-
-function lighten(hex){
- const n=parseInt(hex.slice(1),16);
- const r=Math.min(255,((n>>16)&255)+30);
- const g=Math.min(255,((n>>8)&255)+30);
- const b=Math.min(255,(n&255)+30);
- return `rgb(${r},${g},${b})`;
-}
-
-// ----- 사람 캐릭터 -----
-function drawPerson(p){
- const x=p.x,y=p.y-18;
- // 몸과 팔
- box(x-17,y+10,34,27,p.cloth);
- box(x-20,y+14,7,20,p.skin);
- box(x+13,y+14,7,20,p.skin);
- box(x-12,y+35,9,10,"#6e6b68");
- box(x+4,y+35,9,10,"#6e6b68");
- // 목과 얼굴
- box(x-5,y+4,10,10,p.skin);
- box(x-13,y-16,26,25,p.skin);
- // 헤어 스타일
- if(p.hairStyle===0){
-  box(x-15,y-21,30,12,p.hair);
-  box(x-15,y-12,6,20,p.hair);
-  box(x+9,y-12,6,20,p.hair);
-  box(x-12,y-25,22,6,p.hair);
- }else if(p.hairStyle===1){
-  box(x-15,y-21,30,12,p.hair);
-  box(x-15,y-11,6,9,p.hair);
-  box(x+9,y-11,6,9,p.hair);
- }else if(p.hairStyle===2){
-  box(x-15,y-23,30,13,p.hair);
-  box(x-15,y-12,7,23,p.hair);
-  box(x+8,y-12,7,23,p.hair);
-  box(x-9,y-28,19,7,p.hair);
- }else{
-  box(x-15,y-22,30,13,p.hair);
-  box(x-15,y-11,7,20,p.hair);
-  box(x+8,y-11,7,20,p.hair);
-  box(x-10,y-27,20,7,p.hair);
- }
- // 얼굴
- box(x-8,y-5,4,4,"#514237");
- box(x+5,y-5,4,4,"#514237");
- box(x-3,y+3,6,2,"#ba7770");
- // 이름
- label(p.name,x,y+62,12,"#645d4f");
-}
-
-function drawNurse(){
- const x=nurse.x,y=nurse.y;
- const cloth=uniforms[uniform].color;
- // 그림자
- box(x-15,y+20,30,6,"#a5ae94");
- // 다리
- box(x-10,y+8,8,16,"#52657b");
- box(x+3,y+8,8,16,"#52657b");
- box(x-11,y+21,10,5,"#4e4c48");
- box(x+3,y+21,10,5,"#4e4c48");
- // 몸
- box(x-16,y-15,32,27,cloth);
- box(x-4,y-13,8,25,"#fff7e8");
- box(x-2,y-8,4,6,"#ce7775");
- // 팔
- box(x-20,y-12,6,22,"#f0c6a5");
- box(x+14,y-12,6,22,"#f0c6a5");
- // 얼굴
- box(x-12,y-40,24,25,"#efc4a2");
- // 머리
- box(x-14,y-46,28,12,"#68442f");
- box(x-14,y-38,6,22,"#68442f");
- box(x+8,y-38,6,22,"#68442f");
- box(x-10,y-51,20,7,"#68442f");
- // 눈과 입
- box(x-7,y-30,3,3,"#47382d");
- box(x+4,y-30,3,3,"#47382d");
- box(x-2,y-22,5,2,"#b9706c");
- // 간호사 모자
- box(x-12,y-52,24,7,"#fffaf0");
- box(x-2,y-51,4,5,"#df7479");
- // 이름표
- box(x+7,y-8,7,8,"#fff6dc");
- label("하영",x,y+43,12,"#665c4e");
-}
-
-// ----- 병동 전체 -----
-function draw(){
- ctx.clearRect(0,0,W,H);
- drawFloor();
-
- // 병상 위치
- patients.forEach(p=>{
-  drawBed(p);
-  drawPerson(p);
-  if(p.done){
-   box(p.x+42,p.y-62,20,20,"#8ab38b");
-   label("✓",p.x+52,p.y-47,16,"white");
-  }
-  if(p===urgentPatient&&!p.done){
-   ctx.strokeStyle="#d35e58";
-   ctx.lineWidth=4;
-   ctx.strokeRect(p.x-81,p.y-80,162,130);
-   label("🚨",p.x,p.y-91,22,"#c84c4c");
-  }
- });
-
- // 중앙 간호사 카트
- box(344,350,112,52,"#b48a68");
- box(351,343,98,12,"#e3c7a1");
- box(355,370,90,22,"#d4b18a");
- box(357,395,7,9,"#6b776c");
- box(437,395,7,9,"#6b776c");
- box(370,350,8,8,"#f5e8cf");
- box(387,350,8,8,"#e5b6a6");
- box(405,350,8,8,"#9ec8d2");
- label("간호 카트",400,420,12,"#655d4c");
-
- if(activeSupply){
-  ctx.fillStyle="rgba(255,215,120,.25)";
-  ctx.beginPath();
-  ctx.arc(activeSupply.x,activeSupply.y-8,25,0,Math.PI*2);
-  ctx.fill();
-  box(activeSupply.x-13,activeSupply.y-19,26,23,"#a87545");
-  box(activeSupply.x-15,activeSupply.y-23,30,7,"#d4ad6f");
-  box(activeSupply.x-3,activeSupply.y-23,6,27,"#f0d99c");
-  label("📦",activeSupply.x,activeSupply.y-35,17,"#fff");
- }
-
- // 하영이와 상호작용
- const p=nearest();
- if(p){
-  ctx.strokeStyle="#d7a74d";
-  ctx.lineWidth=3;
-  ctx.strokeRect(p.x-78,p.y-77,156,125);
- }
- drawNurse();
-
- // 환자 말풍선
- if(activeBubble && Date.now()<activeBubble.until){
-  const p=activeBubble.person;
-  speech(p.x,p.y-92,activeBubble.text,activeBubble.color||"#fff8e9");
- }
-
- // 하영이 말풍선
- if(Date.now()<dialogueCooldown){
-  speech(nurse.x,nurse.y-78,"퇴근하고 싶다...", "#fff0d6");
- }
-
- // 작은 장식
- label("✿",35,260,23,"#c48d86");
- label("✿",765,260,23,"#c48d86");
- label("♡",45,470,19,"#d99d9c");
- label("♡",755,470,19,"#d99d9c");
-}
-
-function speech(x,y,str,color){
- ctx.font="bold 13px Arial";
- const width=Math.min(220,Math.max(100,ctx.measureText(str).width+22));
- const bx=Math.max(10,Math.min(W-width-10,x-width/2));
- const by=Math.max(78,y-25);
- box(bx+3,by+3,width,29,"#9b9684");
- box(bx,by,width,27,color);
- ctx.strokeStyle="#a28d72";
- ctx.lineWidth=2;
- ctx.strokeRect(bx,by,width,27);
- box(x-4,by+26,8,7,color);
- label(str,bx+width/2,by+18,12,"#5d5549");
-}
-
-// ----- 환자 말풍선 랜덤 -----
-function randomBubble(){
- if(!running||activeBubble)return;
- const available=patients.filter(p=>!p.done);
- if(!available.length)return;
-
- const p=available[Math.floor(Math.random()*available.length)];
- const msg=p.lines[Math.floor(Math.random()*p.lines.length)];
-
- activeBubble={
-  person:p,
-  text:msg,
-  until:Date.now()+3500
- };
-}
-setInterval(()=>{
- if(running && !activeBubble && Math.random()<.7)randomBubble();
- if(activeBubble && Date.now()>activeBubble.until)activeBubble=null;
-},1000);
-
-function nearest(){
- let best=null,dist=Infinity;
- patients.forEach(p=>{
-  const d=Math.hypot(p.x-nurse.x,p.y-nurse.y);
-  if(!p.done&&d<INTERACTION_DISTANCE&&d<dist){best=p;dist=d;}
- });
- return best;
-}
-
-function updateStats(){
- level=Math.floor(score/200)+1;
- $("score").textContent=score;
- $("level").textContent=level;
- $("money").textContent=money.toLocaleString();
- $("combo").textContent=combo;
- $("goalProgress").textContent=Math.min(completed,DAILY_GOAL)+"/"+DAILY_GOAL;
-}
-
-function setEventMessage(message,duration=4500){
- eventMessage=message;
- eventMessageUntil=Date.now()+duration;
- updateShiftPanel();
-}
-
-function updateShiftPanel(now=Date.now()){
- $("combo").textContent=combo;
- $("goalProgress").textContent=Math.min(completed,DAILY_GOAL)+"/"+DAILY_GOAL;
- const status=$("eventStatus");
- if(running&&urgentPatient){
-  const seconds=Math.max(0,Math.ceil((urgentDeadline-now)/1000));
-  status.textContent="🚨 "+urgentPatient.name+" 긴급 호출 · "+seconds+"초";
- }else if(running&&activeSupply){
-  const seconds=Math.max(0,Math.ceil((activeSupply.expiresAt-now)/1000));
-  status.textContent="📦 보급 상자 · "+seconds+"초 남음";
- }else if(now<eventMessageUntil){
-  status.textContent=eventMessage;
- }else if(running&&nextUrgentAt){
-  const seconds=Math.max(0,Math.ceil((nextUrgentAt-now)/1000));
-  status.textContent="다음 긴급 호출까지 "+seconds+"초";
- }else{
-  status.textContent=running?"모든 환자 업무를 완료했어요!":"출근하면 긴급 호출이 시작돼요.";
- }
-}
-
-function updateEvents(now){
- const elapsed=Math.max(0,now-lastEventUpdate);
- lastEventUpdate=now;
- if(miniGameOpen){
-  if(urgentPatient)urgentDeadline+=elapsed;
-  if(activeSupply)activeSupply.expiresAt+=elapsed;
-  if(nextUrgentAt)nextUrgentAt+=elapsed;
-  if(nextSupplyAt)nextSupplyAt+=elapsed;
-  if(eventMessageUntil)eventMessageUntil+=elapsed;
-  return;
- }
- let missionChanged=false;
- if(urgentPatient&&now>=urgentDeadline){
-  const missed=urgentPatient;
-  urgentPatient=null;
-  nextUrgentAt=now+12000+Math.random()*8000;
-  setEventMessage("⏰ "+missed.name+"의 긴급 호출 시간이 지났어요. 다음 기회에 도전해요!");
-  missionChanged=true;
- }
- if(!urgentPatient&&nextUrgentAt&&now>=nextUrgentAt){
-  const available=patients.filter(p=>!p.done);
-  if(available.length){
-   urgentPatient=available[Math.floor(Math.random()*available.length)];
-   urgentDeadline=now+11000;
-   setEventMessage("🚨 "+urgentPatient.name+"에게 긴급 호출이 왔어요!");
-   missionChanged=true;
-  }else nextUrgentAt=0;
- }
- if(activeSupply&&now>=activeSupply.expiresAt){
-  activeSupply=null;
-  nextSupplyAt=now+8000;
-  setEventMessage("📦 보급 상자가 사라졌어요. 다음 상자를 기다려 주세요.");
- }
- if(!activeSupply&&nextSupplyAt&&now>=nextSupplyAt){
-  const spots=[{x:270,y:270},{x:530,y:270},{x:270,y:520},{x:530,y:520}];
-  const spot=spots[Math.floor(Math.random()*spots.length)];
-  activeSupply={x:spot.x,y:spot.y,expiresAt:now+18000};
-  nextSupplyAt=0;
-  setEventMessage("📦 병동에 보급 상자가 도착했어요. 가까이 가서 획득하세요!");
- }
- if(missionChanged)updateMission();
-}
-
-function collectSupply(){
- if(!activeSupply||Math.hypot(activeSupply.x-nurse.x,activeSupply.y-nurse.y)>38)return;
- activeSupply=null;
- suppliesCollected++;
- score+=75;
- money+=5000;
- nextSupplyAt=Date.now()+18000;
- updateStats();
- setEventMessage("🎁 보급품 획득! +75점 · 월급 5,000원");
- tone(760,.16,.04);
-}
-
-function updateMission(){
- const p=nearest();
- if(urgentPatient){
-  const seconds=Math.max(0,Math.ceil((urgentDeadline-Date.now())/1000));
-  $("mission").innerHTML="🚨 <strong>긴급 호출: "+urgentPatient.name+"</strong><br>"+urgentPatient.task+" · "+seconds+"초 안에 도와주세요!";
- }else if(p){
-  $("mission").innerHTML="💬 <strong>"+p.name+"</strong>: 저 좀 봐주세요~!<br>오늘의 간호: "+p.task+" · 간호하기를 눌러주세요.";
- }else{
-  $("mission").innerHTML="🌿 병동을 돌아다니며 환자들의 상태를 살펴보세요. 환자들이 하영이를 찾고 있어요!";
- }
-}
-
-// ----- 간호 미니게임 -----
-function miniGame(p){
- if(miniGameOpen)return;
- miniGameOpen=true;
- const d=document.createElement("div");
- d.className="overlay";
- activeMiniGame=d;
- const titles={temp:"🌡️ 체온 측정",bp:"🩺 혈압 확인",pulse:"💓 맥박 리듬",iv:"💧 수액 점검",med:"💊 투약 안전"};
- d.innerHTML=`
- <div class="dialog">
- <h2>${titles[p.type]}</h2>
- <p>${p.name}: 간호사님, 이것 좀 해주세요! 🥺</p>
- <div id="gameContent"></div>
- <p class="small">이 미니게임은 게임용 단순화 표현이며, 실제 간호 판단을 대신하지 않아요.</p>
- <button id="leaveMiniGame">나중에 하기</button>
- </div>`;
- document.body.appendChild(d);
- const content=d.querySelector("#gameContent");
- const leave=()=>{d.remove();miniGameOpen=false;activeMiniGame=null;};
- const wrong=message=>{
-  score=Math.max(0,score-30);
-  combo=0;
-  updateStats();
-  setEventMessage("🥲 "+message+" · 30점 감점");
-  tone(170,.3,.05);
- };
- const complete=()=>{
-  const urgent=urgentPatient===p&&Date.now()<urgentDeadline;
-  d.remove();
-  miniGameOpen=false;
-  activeMiniGame=null;
-  p.done=true;
-  completed++;
-  combo++;
-  bestCombo=Math.max(bestCombo,combo);
-  const comboBonus=Math.max(0,combo-1)*25;
-  const urgentBonus=urgent?50:0;
-  score+=100+comboBonus+urgentBonus;
-  money+=10000+(urgent?5000:0);
-  if(urgent){
-   urgentPatient=null;
-   urgentCompleted++;
-   nextUrgentAt=Date.now()+12000+Math.random()*8000;
-  }
-  let goalBonus=0;
-  if(completed>=DAILY_GOAL&&!dailyGoalReached){
-   dailyGoalReached=true;
-   goalBonus=20000;
-   money+=goalBonus;
-  }
-  updateStats();
-  tone(880,.2,.05);
-  const story=completed===1
-   ?"첫 환자가 고맙다며 웃어줬어요. 좋은 하루의 시작이에요!"
-   :completed===DAILY_GOAL
-    ?"동료들이 하영이를 믿기 시작했어요. 오늘의 목표 달성!"
-    :completed===patients.length
-     ?"병동이 한결 평온해졌어요. 오늘의 근무를 훌륭하게 마쳤어요!"
-     :"환자와 동료들의 표정이 한결 밝아졌어요.";
-  $("mission").innerHTML="💗 <strong>"+p.name+": 고마워요, 간호사님!</strong><br>"+story;
-  const rewards=["간호 업무 완료! +100점"];
-  if(comboBonus)rewards.push("콤보 보너스 +"+comboBonus+"점");
-  if(urgentBonus)rewards.push("긴급 호출 보너스 +"+urgentBonus+"점");
-  if(goalBonus)rewards.push("목표 달성 +"+goalBonus.toLocaleString()+"원");
-  if(urgentPatient===p){
-   urgentPatient=null;
-   nextUrgentAt=Date.now()+12000+Math.random()*8000;
-  }
-  setEventMessage(rewards.join(" · "));
-  updateShiftPanel();
-  draw();
-  if(patients.every(v=>v.done))finish(true);
- };
-
- d.querySelector("#leaveMiniGame").onclick=leave;
- if(p.type==="temp"){
-  content.innerHTML=`
-   <p><strong>체온계를 조절해 정상 범위의 수치를 찾아보세요.</strong></p>
-   <div class="skill-controls">
-    <label for="tempValue">체온: <output id="tempDisplay">36.0℃</output></label>
-    <input id="tempValue" type="range" min="34" max="40" step="0.1" value="36" aria-label="체온 조절">
-    <button id="checkTemp">측정 완료</button>
-   </div>`;
-  const value=content.querySelector("#tempValue");
-  const display=content.querySelector("#tempDisplay");
-  value.oninput=()=>display.textContent=Number(value.value).toFixed(1)+"℃";
-  content.querySelector("#checkTemp").onclick=()=>{
-   if(Number(value.value)>=36.5&&Number(value.value)<=37.5)complete();
-   else wrong("정상 범위를 다시 확인해 보세요.");
-  };
- }else if(p.type==="pulse"){
-  content.innerHTML=`
-   <p><strong>박자 버튼을 0.3~1초 간격으로 네 번 눌러 보세요.</strong></p>
-   <div class="skill-controls">
-    <div class="pulse-heart" aria-hidden="true">♥</div>
-    <div class="mini-progress" id="pulseProgress">박자 0/4</div>
-    <button id="pulseTap">박자 맞추기</button>
-   </div>`;
-  let taps=0,lastTap=0;
-  content.querySelector("#pulseTap").onclick=()=>{
-   const now=performance.now();
-   if(lastTap&&((now-lastTap)<300||(now-lastTap)>1000)){
-    wrong("박자 간격이 너무 빠르거나 느려요. 처음부터 다시 해보세요.");
-    taps=0;
-    lastTap=0;
-   }else{
-    taps++;
-    lastTap=now;
-    content.querySelector("#pulseProgress").textContent="박자 "+taps+"/4";
-    if(taps>=4)complete();
-   }
-  };
- }else if(p.type==="iv"){
-  const steps=["처방 확인","주입 속도 확인","주입 부위 확인"];
-  content.innerHTML=`
-   <p><strong>게임 속 수액 점검 순서에 맞춰 세 항목을 선택하세요.</strong></p>
-   <div class="skill-controls">
-    <div class="mini-progress" id="ivProgress">점검 0/3</div>
-    <div class="options" id="ivOptions"></div>
-   </div>`;
-  let step=0;
-  steps.forEach((text,index)=>{
-   const button=document.createElement("button");
-   button.textContent=text;
-   button.onclick=()=>{
-    if(index!==step){
-     wrong("점검 순서가 달라요. 순서를 다시 확인해 보세요.");
-     step=0;
-     content.querySelector("#ivProgress").textContent="점검 0/3";
-     return;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f8f5ef">
+  <title>햄찌의 책갈피</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f8f5ef;
+      --white: #fffefa;
+      --ink: #29251f;
+      --muted: #89847b;
+      --line: #e9e4da;
+      --orange: #e98350;
+      --orange-dark: #c76132;
+      --green: #687b62;
+      --shadow: 0 16px 42px rgba(58, 45, 28, .07);
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
     }
-    step++;
-    content.querySelector("#ivProgress").textContent="점검 "+step+"/3";
-    if(step===steps.length)complete();
-   };
-   content.querySelector("#ivOptions").appendChild(button);
-  });
- }else{
-  const q=p.type==="med"
-   ?["투약 전 기본 확인 원칙으로 알맞은 것은?",["대상자·약물·용량·경로·시간 확인","약 색깔만 확인","다른 환자 약 사용"],0]
-   :["일반적인 성인의 정상 혈압에 가까운 것은?",["120/80 mmHg","180/110 mmHg","80/40 mmHg"],0];
-  content.innerHTML=`<p><strong>${q[0]}</strong></p><div class="options" id="opts"></div>`;
-  q[1].forEach((answer,index)=>{
-   const button=document.createElement("button");
-   button.textContent=answer;
-   button.onclick=()=>index===q[2]?complete():wrong("다시 생각해 보세요.");
-   content.querySelector("#opts").appendChild(button);
-  });
- }
-}
 
-function interact(){
- if(!running||miniGameOpen)return;
- const p=nearest();
- if(!p){
-  $("mission").innerHTML="🔍 <strong>조금 더 가까이 가보세요!</strong><br>환자 침대 옆으로 이동해 주세요.";
-  return;
- }
- miniGame(p);
-}
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 34px 0 64px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand-mark { display: grid; width: 43px; height: 43px; place-items: center; border-radius: 15px; background: #f2dfca; color: var(--orange-dark); font-size: 15px; font-weight: 800; }
+    .brand-name { font-size: 17px; font-weight: 800; letter-spacing: -.5px; }
+    .brand-caption { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .top-actions { display: flex; align-items: center; gap: 12px; }
+    .date-label { color: var(--muted); font-size: 13px; }
+    .primary-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 0 17px; border: 0; border-radius: 13px; background: var(--ink); color: white; font-weight: 700; transition: transform .18s, background .18s; }
+    .primary-button:hover { transform: translateY(-2px); background: #494137; }
 
-// ----- 유니폼 -----
-function closet(){
- const d=document.createElement("div");
- d.className="overlay";
- d.innerHTML=`
- <div class="dialog">
- <h2>👗 하영이의 옷장</h2>
- <p>오늘은 어떤 간호복을 입을까요?</p>
- <div class="options">
- ${uniforms.map((u,i)=>`<button data-u="${i}" style="background:${u.color};color:#3f5044">${u.name}</button>`).join("")}
- </div>
- <button id="close">닫기</button>
- </div>`;
- document.body.appendChild(d);
- d.querySelectorAll("[data-u]").forEach(b=>{
-  b.onclick=()=>{uniform=Number(b.dataset.u);draw()};
- });
- d.querySelector("#close").onclick=()=>d.remove();
-}
+    .hero { position: relative; display: grid; min-height: 450px; place-items: center; margin: 42px 0 28px; padding: 30px; overflow: hidden; border: 1px solid #eee6d9; border-radius: 25px; background: radial-gradient(ellipse at 50% 35%, #f8eddf 0, #f1e7d8 62%, #eddfcd 100%); text-align: center; }
+    .hero-copy { position: relative; z-index: 1; width: min(100%, 560px); margin-top: 245px; padding: 20px 28px; border: 1px solid rgba(255,255,255,.8); border-radius: 20px; background: rgba(255,254,250,.84); box-shadow: 0 12px 35px rgba(58,45,28,.08); backdrop-filter: blur(8px); }
+    .eyebrow { margin: 0 0 12px; color: var(--orange-dark); font-size: 12px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(27px, 4vw, 39px); letter-spacing: -1.8px; line-height: 1.25; }
+    .hero-copy > p:last-child { margin: 12px 0 0; color: #777064; font-size: 14px; line-height: 1.7; }
+    .hero-mascot { position: absolute; z-index: 0; top: 8px; left: 50%; width: 390px; height: 380px; object-fit: contain; transform: translateX(-50%); mix-blend-mode: multiply; }
 
-// ----- 병동 확장 -----
-function ward(){
- const d=document.createElement("div");
- const requiredTasks=()=>wardLevel===1?3:4;
- d.className="overlay";
- d.innerHTML=`
- <div class="dialog">
- <h2>🏡 우리 병동 꾸미기</h2>
- <p>현재 병동 레벨: ${wardLevel}<br>완료한 간호 업무: ${completed}개</p>
- <p id="wardStatus">${wardLevel>=3?"병동이 최고 레벨이에요!":"간호 업무 "+requiredTasks()+"개를 완료하면 업그레이드할 수 있어요."}</p>
- <button id="upgrade">병동 업그레이드</button>
- <button id="close">닫기</button>
- </div>`;
- document.body.appendChild(d);
- d.querySelector("#upgrade").onclick=()=>{
-  if(wardLevel>=3){
-   d.querySelector("#wardStatus").textContent="병동이 최고 레벨이에요!";
-   }else if(completed<requiredTasks()){
-    d.querySelector("#wardStatus").textContent="간호 업무 "+requiredTasks()+"개를 완료해야 해요. 현재 "+completed+"개 완료!";
-  }else{
-   wardLevel++;
-   draw();
-   d.querySelector(".dialog p").innerHTML="현재 병동 레벨: "+wardLevel+"<br>완료한 간호 업무: "+completed+"개";
-   d.querySelector("#wardStatus").textContent=wardLevel>=3
-    ?"병동이 최고 레벨이에요! 🌷"
-    :"새 장식이 추가되었어요! 간호 업무 "+requiredTasks()+"개 완료 후 다음 업그레이드가 가능해요.";
-   d.querySelector("#upgrade").textContent=wardLevel>=3?"최고 레벨":"다음 단계 업그레이드";
-  }
- };
- d.querySelector("#close").onclick=()=>d.remove();
-}
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 17px; }
+    .section-heading h2 { margin: 0; font-size: 21px; letter-spacing: -.7px; }
+    .section-heading p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+    .toolbar { display: flex; align-items: center; gap: 10px; }
+    .search-wrap { position: relative; }
+    .search-icon { position: absolute; top: 50%; left: 13px; color: #999187; transform: translateY(-50%); pointer-events: none; }
+    .search-input { width: 200px; height: 40px; padding: 0 12px 0 36px; border: 1px solid var(--line); border-radius: 12px; outline: 0; background: var(--white); font-size: 13px; }
+    .search-input:focus, .field input:focus, .field select:focus { border-color: #d78a64; box-shadow: 0 0 0 3px rgba(233, 131, 80, .12); }
+    .filter-select { height: 40px; padding: 0 30px 0 12px; border: 1px solid var(--line); border-radius: 12px; outline: 0; background: var(--white); color: #514c44; font-size: 13px; }
+    .book-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .book-card { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--white); transition: transform .2s, box-shadow .2s; }
+    .book-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .book-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    .book-status-group { display: flex; min-width: 0; align-items: center; gap: 10px; }
+    .status-label { display: inline-flex; align-items: center; min-height: 27px; padding: 0 10px; border-radius: 999px; background: #f3f0e9; color: #635d52; font-size: 11px; font-weight: 700; }
+    .status-label[data-status="reading"] { background: #edf2e9; color: #52694d; }
+    .status-label[data-status="finished"] { background: #e9f0e9; color: #4e6752; }
+    .status-thumb { display: block; width: 84px; height: 58px; flex: 0 0 auto; border: 1px solid rgba(77, 62, 45, .12); border-radius: 8px; object-fit: cover; object-position: center 42%; }
+    .book-title { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.4px; line-height: 1.45; overflow-wrap: anywhere; }
+    .book-author { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+    .progress-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 19px 0 9px; color: #777168; font-size: 12px; }
+    .progress-number { color: var(--ink); font-weight: 700; }
+    .progress-track { height: 5px; overflow: hidden; border-radius: 99px; background: #eeeae2; }
+    .progress-fill { height: 100%; border-radius: inherit; background: var(--orange); transition: width .25s; }
+    .card-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
+    .progress-button { padding: 8px 10px; border: 0; border-radius: 9px; background: #f6f0e8; color: #6a5641; font-size: 11px; font-weight: 700; }
+    .progress-button:hover { background: #eee2d1; }
+    .delete-button { padding: 7px; border: 0; background: transparent; color: #aaa39a; font-size: 11px; }
+    .delete-button:hover { color: #b94f3e; }
+    .empty-state { grid-column: 1 / -1; padding: 48px 20px; border: 1px dashed #dcd5c9; border-radius: 16px; color: var(--muted); text-align: center; }
+    .empty-state strong { display: block; margin-bottom: 7px; color: #514c44; font-size: 15px; }
+    .empty-state p { margin: 0; font-size: 13px; line-height: 1.6; }
 
-// ----- 급여 -----
-function salary(){
- const d=document.createElement("div");
- d.className="overlay";
- d.innerHTML=`
- <div class="dialog">
- <h2>👩‍⚕️ 수간호사 평가</h2>
- <p>${completed>=5?"수간호사: 하영 간호사! 오늘 정말 최고였어요! 🌷":completed>=3?"수간호사: 수고했어요. 조금씩 성장하고 있네요!":"수간호사: 아직 배울 게 많지만 잘하고 있어요!"}</p>
- <p>완료한 간호 업무: ${completed}개<br>보유 월급: ${money.toLocaleString()}원</p>
- <button id="close">확인</button>
- </div>`;
- document.body.appendChild(d);
- d.querySelector("#close").onclick=()=>d.remove();
-}
+    dialog { width: min(440px, calc(100% - 32px)); padding: 0; border: 0; border-radius: 20px; background: var(--white); color: var(--ink); box-shadow: 0 24px 80px rgba(31, 25, 18, .24); }
+    dialog::backdrop { background: rgba(41, 37, 31, .36); backdrop-filter: blur(3px); }
+    .dialog-content { padding: 25px; }
+    .dialog-heading { display: flex; align-items: start; justify-content: space-between; margin-bottom: 21px; }
+    .dialog-heading h2 { margin: 0; font-size: 21px; letter-spacing: -.7px; }
+    .dialog-heading p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+    .close-button { width: 32px; height: 32px; border: 0; border-radius: 10px; background: #f4f1eb; color: #615b52; font-size: 18px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: #5e584f; font-size: 12px; font-weight: 700; }
+    .field input, .field select { width: 100%; height: 42px; padding: 0 11px; border: 1px solid var(--line); border-radius: 10px; outline: 0; background: white; color: var(--ink); font-size: 13px; }
+    .form-error { min-height: 18px; margin: 12px 0 0; color: #b94f3e; font-size: 12px; }
+    .form-actions { display: flex; justify-content: end; gap: 9px; margin-top: 7px; }
+    .secondary-button { min-height: 42px; padding: 0 15px; border: 1px solid var(--line); border-radius: 11px; background: white; color: #5e584f; font-weight: 700; }
+    .form-actions .primary-button { min-height: 42px; border-radius: 11px; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 5; padding: 12px 17px; border-radius: 12px; background: var(--ink); color: white; font-size: 13px; box-shadow: var(--shadow); animation: appear .2s ease-out; }
+    @keyframes appear { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 780px) {
+      .app-shell { width: min(100% - 32px, 640px); padding-top: 22px; }
+      .hero { margin-top: 30px; padding: 26px; }
+      .book-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .section-heading { align-items: start; flex-direction: column; }
+      .toolbar { width: 100%; }
+      .search-wrap { flex: 1; }
+      .search-input { width: 100%; }
+    }
+    @media (max-width: 520px) {
+      .app-shell { width: calc(100% - 28px); padding-top: 17px; }
+      .date-label { display: none; }
+      .primary-button { min-height: 40px; padding: 0 13px; font-size: 13px; }
+      .hero { min-height: 390px; margin: 24px 0 18px; padding: 20px 16px; border-radius: 20px; }
+      .hero-copy { margin-top: 205px; padding: 17px 12px; }
+      .hero-mascot { top: 3px; width: 280px; height: 270px; }
+      h1 { font-size: 27px; }
+      .hero-copy > p:last-child { max-width: 250px; margin-right: auto; margin-left: auto; font-size: 12px; }
+      .book-grid { grid-template-columns: 1fr; gap: 11px; }
+      .book-card { padding: 17px; border-radius: 14px; }
+      .book-title { font-size: 16px; }
+      .progress-row { margin-top: 16px; }
+      .progress-button { padding: 9px 11px; font-size: 11px; }
+      .filter-select { max-width: 125px; }
+      .toast { right: 14px; bottom: 14px; left: 14px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">책</div>
+        <div>
+          <div class="brand-name">햄찌의 책갈피</div>
+          <div class="brand-caption">작은 햄스터의 커다란 독서생활</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="date-label" id="todayLabel"></span>
+        <button class="primary-button" id="openDialogButton" type="button"><span aria-hidden="true">＋</span> 새 기록</button>
+      </div>
+    </header>
 
-$("closet").onclick=closet;
-$("ward").onclick=ward;
-$("salary").onclick=salary;
+    <section class="hero" aria-labelledby="welcomeTitle">
+      <div class="hero-copy">
+        <p class="eyebrow">MY LITTLE BOOK NOOK</p>
+        <h1 id="welcomeTitle">오늘은 어떤 책을<br>읽어볼까요?</h1>
+        <p>햄찌와 마음의 양식을 쌓자 아자아자 아자쓰!!</p>
+      </div>
+      <img class="hero-mascot" src="hamster-background.png" alt="햄스터 사진">
+    </section>
 
-// ----- 이동 -----
-function move(){
- if(!running||miniGameOpen)return;
- let dx=0,dy=0;
- if(keys.left)dx=-1;
- if(keys.right)dx=1;
- if(keys.up)dy=-1;
- if(keys.down)dy=1;
- if(dx&&dy){dx*=.707;dy*=.707}
- nurse.x=Math.max(35,Math.min(765,nurse.x+dx*nurse.speed));
- nurse.y=Math.max(245,Math.min(560,nurse.y+dy*nurse.speed));
- if(dx||dy)updateMission();
-}
+    <section aria-labelledby="booksHeading">
+      <div class="section-heading">
+        <div>
+          <h2 id="booksHeading">독서 기록</h2>
+          <p>읽고 싶은 책도, 다 읽은 책도 여기에 모아요.</p>
+        </div>
+        <div class="toolbar">
+          <label class="search-wrap">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input class="search-input" id="searchInput" type="search" placeholder="책 제목이나 작가 검색" aria-label="책 제목이나 작가 검색">
+          </label>
+          <select class="filter-select" id="statusFilter" aria-label="독서 상태 필터">
+            <option value="all">전체 보기</option>
+            <option value="reading">읽는 중</option>
+            <option value="finished">완독</option>
+            <option value="want">읽고 싶어요</option>
+          </select>
+        </div>
+      </div>
+      <div class="book-grid" id="bookGrid" aria-live="polite"></div>
+    </section>
+  </main>
 
-function loop(now){
- if(!running)return;
- const dt=Math.min((now-last)/16.67,2);
- last=now;
- updateEvents(Date.now());
- const speed=nurse.speed;
- nurse.speed=3.6*dt;
- move();
- nurse.speed=speed;
- collectSupply();
+  <dialog id="bookDialog" aria-labelledby="dialogTitle">
+    <form class="dialog-content" id="bookForm">
+      <div class="dialog-heading">
+        <div>
+          <h2 id="dialogTitle">새 책 기록하기</h2>
+          <p>책 한 권을 책장에 살며시 올려둘까요?</p>
+        </div>
+        <button class="close-button" id="closeDialogButton" type="button" aria-label="닫기">×</button>
+      </div>
+      <div class="form-grid">
+        <div class="field full">
+          <label for="titleInput">책 제목</label>
+          <input id="titleInput" name="title" maxlength="80" placeholder="예: 달러구트 꿈 백화점" required>
+        </div>
+        <div class="field full">
+          <label for="authorInput">작가</label>
+          <input id="authorInput" name="author" maxlength="60" placeholder="작가 이름" required>
+        </div>
+        <div class="field">
+          <label for="pageInput">전체 쪽수</label>
+          <input id="pageInput" name="pages" type="number" min="1" max="100000" placeholder="320" required>
+        </div>
+        <div class="field">
+          <label for="readInput">읽은 쪽수</label>
+          <input id="readInput" name="readPages" type="number" min="0" placeholder="0" value="0" required>
+        </div>
+        <div class="field full">
+          <label for="statusInput">독서 상태</label>
+          <select id="statusInput" name="status">
+            <option value="reading">읽는 중</option>
+            <option value="want">읽고 싶어요</option>
+            <option value="finished">완독</option>
+          </select>
+        </div>
+      </div>
+      <p class="form-error" id="formError" role="alert"></p>
+      <div class="form-actions">
+        <button class="secondary-button" id="cancelButton" type="button">취소</button>
+        <button class="primary-button" type="submit">책장에 담기</button>
+      </div>
+    </form>
+  </dialog>
 
- // 가끔 하영이 속마음 등장
- if(Date.now()>dialogueCooldown && Math.random()<.0015){
-  dialogueCooldown=Date.now()+2300;
-  activeBubble=null;
- }
- draw();
- raf=requestAnimationFrame(loop);
-}
+  <script>
+    const STORAGE_KEY = "hamzzi-reading-journal-v1";
+    const statusLabels = { reading: "읽는 중", finished: "완독", want: "읽고 싶어요" };
+    const statusImages = { reading: "hamster-reading.png", finished: "hamster-finished.png", want: "hamster-want.png" };
+    const bookGrid = document.getElementById("bookGrid");
+    const dialog = document.getElementById("bookDialog");
+    const form = document.getElementById("bookForm");
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    let books = loadBooks();
+    let toastTimer;
 
-// ----- 종료 및 시작 -----
-function finish(all=false){
- if(!running)return;
- running=false;
- cancelAnimationFrame(raf);
- clearInterval(timer);
- musicStop();
- if(activeMiniGame)activeMiniGame.remove();
- activeMiniGame=null;
- const bonus=all?50000:0;
- money+=bonus;
- urgentPatient=null;
- activeSupply=null;
- nextUrgentAt=0;
- nextSupplyAt=0;
- miniGameOpen=false;
- updateStats();
- $("dialogTitle").textContent=all?"🌷 오늘의 간호왕!":"🌙 퇴근이다!";
- $("dialogText").innerHTML=
- (all?"수간호사: 하영 간호사! 오늘 완벽했어요! 💗":"하영이: 드디어 퇴근이다... 살았다... 🥹")+
- "<br><br>오늘의 점수: "+score+"점<br>완료 업무: "+completed+"개<br>최고 콤보: "+bestCombo+
- "<br>긴급 호출 성공: "+urgentCompleted+"회<br>보급품 획득: "+suppliesCollected+"개"+
- "<br>오늘의 목표: "+(dailyGoalReached?"달성":"미달성")+
- "<br>퇴근 보너스: "+bonus.toLocaleString()+"원<br>총 월급: "+money.toLocaleString()+"원";
- setEventMessage("근무가 종료됐어요. 오늘도 수고했어요!",10000);
- updateShiftPanel();
- $("dialogStart").textContent="다시 출근하기";
- $("overlay").classList.remove("hidden");
-}
+    function loadBooks() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === null) {
+          return [
+            { id: "sample-1", title: "불편한 편의점", author: "김호연", pages: 268, readPages: 124, status: "reading" },
+            { id: "sample-2", title: "아주 작은 습관의 힘", author: "제임스 클리어", pages: 320, readPages: 0, status: "want" },
+            { id: "sample-3", title: "모순", author: "양귀자", pages: 308, readPages: 308, status: "finished" }
+          ];
+        }
+        const parsed = JSON.parse(saved);
+        if (!Array.isArray(parsed)) throw new Error("저장된 책 목록 형식이 올바르지 않습니다.");
+        return parsed.filter(book => book && typeof book.id === "string" && typeof book.title === "string"
+          && typeof book.author === "string" && Number.isFinite(book.pages) && Number.isFinite(book.readPages)
+          && ["reading", "finished", "want"].includes(book.status));
+      } catch (error) {
+        console.error("독서 기록을 불러오지 못했습니다.", error);
+        return [];
+      }
+    }
 
-function start(){
- initAudio();
- musicStop();
- clearInterval(timer);
- cancelAnimationFrame(raf);
- patients.forEach(p=>p.done=false);
- nurse.x=400;nurse.y=485;
- score=0;level=1;time=90;completed=0;
- combo=0;bestCombo=0;dailyGoalReached=false;
- urgentPatient=null;urgentDeadline=0;urgentCompleted=0;
- activeSupply=null;suppliesCollected=0;
- nextUrgentAt=Date.now()+7000+Math.random()*4000;
- nextSupplyAt=Date.now()+10000+Math.random()*5000;
- eventMessage="출근했어요! 병동을 살펴보세요.";
- eventMessageUntil=Date.now()+4000;
- miniGameOpen=false;lastEventUpdate=Date.now();
- activeBubble=null;dialogueCooldown=0;
- updateStats();
- $("time").textContent="90초";
- running=true;
- last=performance.now();
- $("overlay").classList.add("hidden");
- updateMission();
- updateShiftPanel();
- draw();
- musicStart();
- raf=requestAnimationFrame(loop);
- timer=setInterval(()=>{
-  if(!running)return;
-  time--;
-  $("time").textContent=time+"초";
-  updateShiftPanel();
-  if(time<=0)finish();
- },1000);
-}
+    function saveBooks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+      } catch (error) {
+        console.error("독서 기록을 저장하지 못했습니다.", error);
+        showToast("기록을 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.");
+      }
+    }
 
-$("start").onclick=start;
-$("dialogStart").onclick=start;
-$("interact").onclick=interact;
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[character]);
+    }
 
-// 키보드
-const keyMap={
- ArrowLeft:"left",ArrowRight:"right",
- ArrowUp:"up",ArrowDown:"down",
- a:"left",d:"right",w:"up",s:"down",
- A:"left",D:"right",W:"up",S:"down"
-};
-document.addEventListener("keydown",e=>{
- if(keyMap[e.key]){
-  e.preventDefault();
-  keys[keyMap[e.key]]=true;
- }
- if(e.key.toLowerCase()==="e")interact();
-});
-document.addEventListener("keyup",e=>{
- if(keyMap[e.key])keys[keyMap[e.key]]=false;
-});
-window.addEventListener("blur",()=>Object.keys(keys).forEach(key=>keys[key]=false));
+    function render() {
+      const query = searchInput.value.trim().toLocaleLowerCase("ko");
+      const selectedStatus = statusFilter.value;
+      const visibleBooks = books.filter(book => {
+        const matchesSearch = `${book.title} ${book.author}`.toLocaleLowerCase("ko").includes(query);
+        return matchesSearch && (selectedStatus === "all" || book.status === selectedStatus);
+      });
 
-// 모바일 버튼
-document.querySelectorAll("[data-dir]").forEach(b=>{
- const dir=b.dataset.dir;
- b.addEventListener("pointerdown",e=>{
-  e.preventDefault();
-  keys[dir]=true;
-  b.setPointerCapture(e.pointerId);
- });
- ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>{
-  b.addEventListener(ev,()=>keys[dir]=false);
- });
-});
+      if (visibleBooks.length === 0) {
+        const isEmpty = books.length === 0;
+        bookGrid.innerHTML = `<div class="empty-state"><strong>${isEmpty ? "아직 기록이 없습니다" : "검색 결과가 없습니다"}</strong><p>${isEmpty ? "새 기록을 눌러 첫 번째 책을 추가해 보세요." : "검색어나 필터를 바꿔서 다시 찾아보세요."}</p></div>`;
+        return;
+      }
 
-draw();
-</script>
+      bookGrid.innerHTML = visibleBooks.map(book => {
+        const percent = Math.min(100, Math.round((book.readPages / book.pages) * 100));
+        const actionText = book.status === "finished" ? "다 읽었어요" : book.status === "want" ? "읽기 시작" : "+10쪽 읽기";
+        const actionDisabled = book.status === "finished";
+        const statusImage = statusImages[book.status];
+        return `<article class="book-card" data-status="${book.status}">
+          <div class="book-card-top">
+            <div class="book-status-group">
+              <span class="status-label" data-status="${book.status}">${statusLabels[book.status]}</span>
+              ${statusImage ? `<img class="status-thumb" src="${statusImage}" alt="">` : ""}
+            </div>
+            <button class="delete-button" type="button" data-action="delete" data-id="${escapeHTML(book.id)}" aria-label="${escapeHTML(book.title)} 기록 삭제">삭제</button>
+          </div>
+          <h3 class="book-title" title="${escapeHTML(book.title)}">${escapeHTML(book.title)}</h3>
+          <p class="book-author">${escapeHTML(book.author)}</p>
+          <div class="progress-row"><span>독서 진행률</span><span class="progress-number">${book.readPages} / ${book.pages}쪽 · ${percent}%</span></div>
+          <div class="progress-track" role="progressbar" aria-label="${escapeHTML(book.title)} 독서 진행률" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" style="width:${percent}%"></div></div>
+          <div class="card-actions">
+            <button class="progress-button" type="button" data-action="progress" data-id="${escapeHTML(book.id)}" ${actionDisabled ? "disabled" : ""}>${actionText}</button>
+          </div>
+        </article>`;
+      }).join("");
+    }
+
+    function showToast(message) {
+      const current = document.querySelector(".toast");
+      if (current) current.remove();
+      clearTimeout(toastTimer);
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.setAttribute("role", "status");
+      toast.textContent = message;
+      document.body.append(toast);
+      toastTimer = setTimeout(() => toast.remove(), 2400);
+    }
+
+    document.getElementById("todayLabel").textContent = new Intl.DateTimeFormat("ko-KR", {
+      year: "numeric", month: "long", day: "numeric", weekday: "short"
+    }).format(new Date());
+
+    document.getElementById("openDialogButton").addEventListener("click", () => {
+      form.reset();
+      document.getElementById("formError").textContent = "";
+      dialog.showModal();
+      document.getElementById("titleInput").focus();
+    });
+    document.getElementById("closeDialogButton").addEventListener("click", () => dialog.close());
+    document.getElementById("cancelButton").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", event => {
+      if (event.target === dialog) dialog.close();
+    });
+    searchInput.addEventListener("input", render);
+    statusFilter.addEventListener("change", render);
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const title = String(data.get("title")).trim();
+      const author = String(data.get("author")).trim();
+      const pages = Number(data.get("pages"));
+      let readPages = Number(data.get("readPages"));
+      let status = String(data.get("status"));
+      const error = document.getElementById("formError");
+      error.textContent = "";
+
+      if (!title || !author || !Number.isInteger(pages) || pages < 1 || !Number.isInteger(readPages) || readPages < 0 || readPages > pages) {
+        error.textContent = "제목과 작가를 입력하고, 쪽수를 올바르게 확인해 주세요.";
+        return;
+      }
+      if (!["reading", "finished", "want"].includes(status)) {
+        error.textContent = "독서 상태를 선택해 주세요.";
+        return;
+      }
+      if (status === "finished") readPages = pages;
+      if (readPages === pages) status = "finished";
+
+      books.unshift({ id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`, title, author, pages, readPages, status });
+      saveBooks();
+      render();
+      dialog.close();
+      showToast("책장에 새 기록을 추가했어요.");
+    });
+
+    bookGrid.addEventListener("click", event => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const book = books.find(item => item.id === button.dataset.id);
+      if (!book) return;
+
+      if (button.dataset.action === "delete") {
+        books = books.filter(item => item.id !== book.id);
+        saveBooks();
+        render();
+        showToast("책 기록을 삭제했어요.");
+      } else if (button.dataset.action === "progress" && book.status !== "finished") {
+        if (book.status === "want") book.status = "reading";
+        book.readPages = Math.min(book.pages, book.readPages + 10);
+        if (book.readPages === book.pages) book.status = "finished";
+        saveBooks();
+        render();
+        showToast(book.status === "finished" ? "완독 처리되었습니다." : "독서 진도를 업데이트했어요.");
+      }
+    });
+
+    render();
+  </script>
 </body>
 </html>
