@@ -3,116 +3,160 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#273b38">
 <title>하영이 간호사 키우기</title>
 <style>
 *{box-sizing:border-box}
 body{
- margin:0;background:#202b36;color:white;
+ margin:0;background:#273b38;color:#fff;
  font-family:Arial,sans-serif;
  display:flex;justify-content:center;
- min-height:100dvh;overflow:hidden;
- touch-action:none;
+ min-height:100dvh;
 }
-.app{width:100%;max-width:700px;padding:12px;text-align:center}
-h1{font-size:23px;color:#a7f3d0;margin:8px}
-.sub{font-size:12px;color:#cbd5e1;margin-bottom:10px}
-.status{
- display:flex;justify-content:space-around;gap:5px;
- background:#334155;border-radius:12px;padding:10px;
- margin-bottom:9px;font-size:13px
+.app{width:100%;max-width:1000px;padding:12px}
+h1{text-align:center;color:#f5e8bd;font-size:25px;margin:7px}
+.sub{text-align:center;color:#d5d9bd;font-size:12px;margin-bottom:12px}
+.stats{
+ display:grid;grid-template-columns:repeat(4,1fr);
+ gap:7px;margin-bottom:10px
 }
-.status b{color:#a7f3d0;font-size:17px}
+.stat{
+ background:#405b50;border:2px solid #69816d;
+ border-radius:9px;padding:9px;text-align:center;
+ font-size:12px;color:#e4e8d4
+}
+.stat b{display:block;color:#ffdf9c;font-size:19px;margin-top:4px}
+.screen{
+ position:relative;width:100%;
+ background:#d9e5c8;border:5px solid #627e69;
+ border-radius:10px;overflow:hidden;
+ box-shadow:0 7px 20px #101b1680
+}
 canvas{
- width:100%;height:auto;display:block;
- border:4px solid #64748b;border-radius:9px;
- background:#d8e8dc;image-rendering:pixelated;
- touch-action:none;
+ display:block;width:100%;height:auto;
+ image-rendering:pixelated;touch-action:none
 }
 .mission{
- background:#334155;border:1px solid #64748b;
- padding:10px;border-radius:10px;margin-top:9px;
- font-size:14px;line-height:1.6;min-height:65px
+ background:#405b50;border:2px solid #69816d;
+ border-radius:10px;padding:12px;margin-top:10px;
+ font-size:14px;line-height:1.6;min-height:55px
 }
-.mission strong{color:#fde68a}
-.controls{
+.mission strong{color:#ffdf9c}
+.bottom{
  display:flex;justify-content:space-between;
- align-items:center;margin-top:10px;gap:12px
+ align-items:center;gap:15px;margin-top:12px
 }
-.pad{display:grid;grid-template-columns:repeat(3,48px);gap:4px}
+.pad{
+ display:grid;grid-template-columns:repeat(3,64px);
+ gap:5px
+}
 button{
- border:0;border-radius:10px;background:#475569;
- color:white;font-size:19px;font-weight:bold;
- padding:11px;touch-action:none;
- box-shadow:0 3px #263449;
+ border:2px solid #81917a;border-radius:12px;
+ background:#587461;color:#fff;font-size:21px;
+ font-weight:bold;padding:12px;
+ box-shadow:0 4px #304d3c;
+ touch-action:none;user-select:none;
+ -webkit-tap-highlight-color:transparent
 }
-button:active{background:#0d9488;transform:translateY(2px);box-shadow:none}
-.pad button{height:43px;padding:5px}
+button:active{transform:translateY(3px);box-shadow:0 1px #304d3c;background:#78966d}
+button:focus-visible{outline:3px solid #ffdf9c;outline-offset:3px}
+.pad button{height:58px;padding:4px;font-size:27px}
 .blank{visibility:hidden}
-.action{background:#0d9488;flex:1;max-width:140px;font-size:15px}
-.music{background:#475569;font-size:14px}
-#start{background:#16a085;font-size:15px}
-.note{font-size:11px;color:#cbd5e1;margin:12px}
+.actions{display:flex;flex:1;gap:7px;justify-content:flex-end}
+.actions button{flex:1;font-size:14px;min-height:57px}
+.green{background:#477f69}
+.pink{background:#a66e79}
+.menu{display:flex;gap:7px;margin-top:10px}
+.menu button{flex:1;font-size:13px;padding:11px 3px;background:#405b50}
+.note{text-align:center;color:#c4d2c2;font-size:11px;margin:12px}
 .overlay{
- position:fixed;inset:0;background:#101827dd;
+ position:fixed;inset:0;background:#15231fd9;
  display:flex;align-items:center;justify-content:center;
- padding:20px;z-index:5
+ z-index:10;padding:15px
 }
 .dialog{
- width:100%;max-width:340px;background:#334155;
- padding:25px;border:2px solid #6ee7b7;
- border-radius:18px;text-align:center
+ background:#f2e8d2;color:#485648;
+ border:5px solid #9d9a70;border-radius:14px;
+ padding:24px;width:100%;max-width:410px;
+ text-align:center;max-height:90vh;overflow:auto;
+ box-shadow:0 10px 30px #0008
 }
-.dialog h2{color:#a7f3d0}
-.dialog p{font-size:14px;line-height:1.8;color:#e2e8f0}
-.hidden{display:none}
+.dialog h2{color:#54775b}
+.dialog p{font-size:14px;line-height:1.8}
+.dialog button{font-size:14px;margin:4px}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.hidden{display:none!important}
+@media(max-width:500px){
+ .app{padding:7px}
+ h1{font-size:21px}
+ .sub{margin-bottom:8px}
+ .stat{padding:7px 2px;font-size:10px}
+ .stat b{font-size:17px}
+ .bottom{gap:7px}
+ .pad{grid-template-columns:repeat(3,57px);gap:4px}
+ .pad button{height:57px}
+ .actions{gap:5px}
+ .actions button{font-size:12px;padding:8px 3px}
+ .menu button{font-size:11px}
+}
 </style>
 </head>
+
 <body>
 <div class="app">
-<h1>🌷 하영이 간호사 키우기 🏥</h1>
-<div class="sub">오늘도 병동을 지켜주세요! 간호사 하영이의 하루</div>
+<h1>🌿 하영이 간호사 키우기</h1>
+<div class="sub">A LITTLE NURSE'S DAILY LIFE · 병동에서 살아남기</div>
 
-<div class="status">
- <div>⭐ 점수<br><b id="score">0</b></div>
- <div>💗 체력<br><b id="hp">100</b></div>
- <div>🌟 레벨<br><b id="level">1</b></div>
- <div>⏰ 남은 시간<br><b id="time">90</b></div>
+<div class="stats">
+ <div class="stat">⭐ 간호 점수<b id="score">0</b></div>
+ <div class="stat">🌷 간호 레벨<b id="level">1</b></div>
+ <div class="stat">💰 월급<b id="money">0</b></div>
+ <div class="stat">🕒 퇴근까지<b id="time">90초</b></div>
 </div>
 
-<canvas id="game" width="640" height="480"></canvas>
+<div class="screen">
+ <canvas id="game" width="800" height="600" aria-label="병동 게임 화면. 방향키 또는 WASD로 이동하고 환자 가까이에서 E 키로 간호합니다."></canvas>
+</div>
 
 <div class="mission" id="mission">
- 🌸 하영이에게 병동을 소개해 주세요!<br>
- <strong>게임 시작을 눌러주세요.</strong>
+ 오늘도 출근 완료! 환자들이 하영이를 기다리고 있어요.
 </div>
 
-<div class="controls">
+<div class="bottom">
  <div class="pad">
-  <button class="blank"> </button>
-  <button data-dir="up">▲</button>
-  <button class="blank"> </button>
-  <button data-dir="left">◀</button>
-  <button data-dir="down">▼</button>
-  <button data-dir="right">▶</button>
+  <button class="blank"></button>
+  <button data-dir="up" aria-label="위쪽으로 이동">▲</button>
+  <button class="blank"></button>
+  <button data-dir="left" aria-label="왼쪽으로 이동">◀</button>
+  <button data-dir="down" aria-label="아래쪽으로 이동">▼</button>
+  <button data-dir="right" aria-label="오른쪽으로 이동">▶</button>
  </div>
- <button class="action" id="interact">💉 간호하기</button>
- <button class="music" id="music">🎵 ON</button>
+ <div class="actions">
+  <button class="green" id="interact">간호하기</button>
+  <button class="pink" id="music">♫ 음악 ON</button>
+ </div>
 </div>
-<button id="start" style="width:100%;margin-top:13px">▶ 게임 시작하기</button>
-<div class="note">키보드 방향키 / WASD 이동 · E 또는 간호하기 버튼으로 미션 수행</div>
+
+<div class="menu">
+ <button id="ward">병동 꾸미기</button>
+ <button id="closet">유니폼</button>
+ <button id="salary">월급·칭찬</button>
+ <button id="start">다시 출근</button>
+</div>
+<div class="note">방향키 / WASD 이동 · E 간호하기 · 환자에게 다가가서 간호해 주세요!</div>
 </div>
 
 <div class="overlay" id="overlay">
  <div class="dialog">
-  <h2 id="title">🌷 하영이 간호사 키우기</h2>
-  <p id="description">
-   귀여운 병동에서 간호사 하영이의 하루가 시작돼요!<br><br>
-   환자에게 다가가 간호 미션을 수행하세요.<br>
-   90초 동안 최대한 많은 환자를 돌봐주세요!<br><br>
-   🎵 신나는 음악과 함께 출발!
+  <h2 id="dialogTitle">🌷 하영이의 첫 출근</h2>
+  <p id="dialogText">
+   여기는 하영이가 근무하는 작은 병동이에요.<br><br>
+   환자들의 말에 귀 기울이고, 필요한 간호를 해주세요.<br>
+   환자들이 가끔 징징대기도 하지만 너무 걱정하지 마세요!<br><br>
+   오늘도 무사히 퇴근할 수 있을까요? 🥹
   </p>
-  <button id="begin" style="background:#0d9488;width:100%">병동 출근하기 🏥</button>
+  <button id="dialogStart" style="background:#527b5b;width:100%">출근하기 🌿</button>
  </div>
 </div>
 
@@ -121,49 +165,62 @@ const c=document.getElementById("game");
 const ctx=c.getContext("2d");
 const $=id=>document.getElementById(id);
 
-let active=false,score=0,hp=100,level=1,time=90;
-let last=0,raf=null,timer=null;
-let musicOn=true,audio=null,musicTimer=null,musicIndex=0;
-
-const nurse={x:310,y:340,speed:3.2,dir:"up"};
+const W=800,H=600;
+const INTERACTION_DISTANCE=100;
+let running=false,score=0,level=1,money=0,time=90;
+let raf=0,timer=null,last=0;
+let audio=null,musicTimer=null,musicOn=true,musicIndex=0;
+let uniform=0,wardLevel=1,completed=0;
+let bubbleTimer=0,activeBubble=null;
+let dialogueCooldown=0;
 const keys={};
-const tile=40;
+
+const nurse={
+ x:400,y:485,speed:3.6
+};
+
+const uniforms=[
+ {name:"민트 간호복",color:"#75c8a9"},
+ {name:"핑크 간호복",color:"#e9a5b9"},
+ {name:"라벤더 간호복",color:"#b8a5dc"},
+ {name:"하늘색 간호복",color:"#8dc9df"},
+ {name:"화이트 간호복",color:"#f2eee1"}
+];
 
 const patients=[
- {x:130,y:125,name:"김순자 환자",task:"체온 측정",icon:"🌡️",done:false,color:"#f6c6b5"},
- {x:320,y:125,name:"박철수 환자",task:"혈압 측정",icon:"🩺",done:false,color:"#b9d9fa"},
- {x:510,y:125,name:"이영희 환자",task:"약 전달",icon:"💊",done:false,color:"#f3d4a7"},
- {x:130,y:280,name:"최민수 환자",task:"수액 확인",icon:"💧",done:false,color:"#d8c7f7"},
- {x:510,y:280,name:"정미자 환자",task:"환자 안위 확인",icon:"💗",done:false,color:"#f4c9dc"}
+ {
+  x:145,y:170,name:"김순자 환자",task:"체온 측정",type:"temp",
+  hair:"#776044",skin:"#e8bd9e",cloth:"#e7a8a0",
+  hairStyle:0,done:false,
+  lines:["물 좀 주세요!","아이고, 허리가 아파요...","언제 집에 가나요?","체온 좀 재주세요~","밥이 조금 싱거워요!"]
+ },
+ {
+  x:400,y:170,name:"박철수 환자",task:"혈압 측정",type:"bp",
+  hair:"#39312b",skin:"#d9aa83",cloth:"#9db8db",
+  hairStyle:1,done:false,
+  lines:["혈압이 높게 나오면 어떡하죠?","간호사님! 혈압 좀 봐주세요.","심심해서 잠이 안 와요.","TV 채널 좀 바꿔주세요!"]
+ },
+ {
+  x:655,y:170,name:"이영희 환자",task:"약물 투여",type:"med",
+  hair:"#8c5837",skin:"#efc6a7",cloth:"#dca8c7",
+  hairStyle:2,done:false,
+  lines:["약 먹기 너무 싫어요...","이 약은 무슨 약이에요?","주사 아파요? ㅠㅠ","간호사님 저 무서워요."]
+ },
+ {
+  x:145,y:355,name:"최민수 환자",task:"맥박 측정",type:"pulse",
+  hair:"#292b32",skin:"#d7a787",cloth:"#a5b9d8",
+  hairStyle:1,done:false,
+  lines:["간호사님~ 저 심심해요!","휴대폰 충전 좀 해주세요.","배가 고파요...","오늘 퇴원할 수 있어요?"]
+ },
+ {
+  x:655,y:355,name:"정미자 환자",task:"수액 확인",type:"iv",
+  hair:"#b3a18a",skin:"#ecc4a5",cloth:"#bba6db",
+  hairStyle:3,done:false,
+  lines:["수액 다 들어간 것 같은데?","간호사님~ 뭐하세요?","팔이 조금 불편해요.","저녁은 언제 나와요?"]
+ }
 ];
 
-const melody=[
- 523,659,784,659,523,659,880,784,
- 587,698,880,698,587,698,988,880,
- 659,784,1046,784,659,784,988,880
-];
-
-function sound(freq,duration=.13,volume=.035){
- if(!audio||!musicOn)return;
- const o=audio.createOscillator();
- const g=audio.createGain();
- o.type="square";o.frequency.value=freq;
- g.gain.setValueAtTime(volume,audio.currentTime);
- g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);
- o.connect(g);g.connect(audio.destination);
- o.start();o.stop(audio.currentTime+duration);
-}
-function startMusic(){
- if(!musicOn||musicTimer)return;
- musicTimer=setInterval(()=>{
-  if(!active)return;
-  sound(melody[musicIndex],.18,.022);
-  musicIndex=(musicIndex+1)%melody.length;
- },180);
-}
-function stopMusic(){
- clearInterval(musicTimer);musicTimer=null;
-}
+// ----- 오디오 -----
 function initAudio(){
  if(!audio){
   const AC=window.AudioContext||window.webkitAudioContext;
@@ -171,264 +228,581 @@ function initAudio(){
  }
  if(audio&&audio.state==="suspended")audio.resume();
 }
-
-function rect(x,y,w,h,color){
- ctx.fillStyle=color;ctx.fillRect(x,y,w,h);
+function tone(f,d=.13,v=.025,type="square"){
+ if(!audio||!musicOn)return;
+ const o=audio.createOscillator(),g=audio.createGain();
+ o.type=type;o.frequency.value=f;
+ g.gain.setValueAtTime(v,audio.currentTime);
+ g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+d);
+ o.connect(g);g.connect(audio.destination);
+ o.start();o.stop(audio.currentTime+d);
 }
-function text(str,x,y,size=13,color="#334155"){
+const melody=[523,659,784,659,587,698,880,698,659,784,988,784,698,880,1046,880,523,659,784,1046];
+function musicStart(){
+ if(!musicOn||musicTimer)return;
+ musicTimer=setInterval(()=>{
+  if(running){
+   tone(melody[musicIndex],.17,.018,"triangle");
+   musicIndex=(musicIndex+1)%melody.length;
+  }
+ },180);
+}
+function musicStop(){
+ clearInterval(musicTimer);musicTimer=null;
+}
+$("music").onclick=()=>{
+ musicOn=!musicOn;
+ $("music").textContent=musicOn?"♫ 음악 ON":"음악 OFF";
+ if(musicOn){initAudio();musicStart()}else musicStop();
+};
+
+// ----- 픽셀 아트 도구 -----
+function box(x,y,w,h,color){
+ ctx.fillStyle=color;
+ ctx.fillRect(Math.round(x),Math.round(y),w,h);
+}
+function line(x,y,w,h,color){box(x,y,w,h,color)}
+function label(t,x,y,size=13,color="#665b4d"){
  ctx.font="bold "+size+"px Arial";
- ctx.textAlign="center";ctx.fillStyle=color;
- ctx.fillText(str,x,y);
+ ctx.textAlign="center";
+ ctx.fillStyle=color;
+ ctx.fillText(t,x,y);
 }
-function drawRoom(){
- rect(0,0,640,480,"#dcebdc");
 
- // 바닥 타일
- for(let y=0;y<480;y+=40){
-  for(let x=0;x<640;x+=40){
-   rect(x,y,39,39,(x/40+y/40)%2===0?"#e5efdf":"#d8e7d6");
+// ----- 병동 바닥 -----
+function drawFloor(){
+ box(0,0,W,H,"#d8e4ca");
+ const colors=["#e7e7d0","#dce5c9","#e3e8d0","#d5e0c7"];
+ for(let y=0;y<H;y+=40){
+  for(let x=0;x<W;x+=40){
+   box(x,y,39,39,colors[((x/40)+(y/40))%4|0]);
+   box(x,y+38,39,2,"#c3d0b8");
+   box(x+38,y,2,39,"#c3d0b8");
   }
  }
  // 벽
- rect(0,0,640,45,"#d5bba4");
- rect(0,42,640,8,"#a98c76");
- text("🌼  HAPPY HOSPITAL  🌼",320,30,19,"#685447");
+ box(0,0,W,75,"#c6a98c");
+ box(0,68,W,12,"#9f836c");
+ box(0,0,W,7,"#e5d3b9");
+
+ // 벽 장식
+ label("HAPPY HOSPITAL",400,42,23,"#fff2d3");
+ label("♡",55,43,23,"#f8d5bd");
+ label("♡",745,43,23,"#f8d5bd");
 
  // 창문
- for(let x of [45,255,465]){
-  rect(x,58,115,8,"#a6c9b6");
-  rect(x,65,115,55,"#bde6ed");
-  rect(x+54,65,5,55,"#ffffff");
-  rect(x,90,115,4,"#ffffff");
- }
-
- // 병상
- patients.forEach(p=>{
-  rect(p.x-48,p.y-20,96,65,"#8babc2");
-  rect(p.x-43,p.y-15,86,54,"#fafafa");
-  rect(p.x-40,p.y-12,30,27,p.color);
-  rect(p.x-10,p.y-12,55,27,"#ffffff");
-  rect(p.x-47,p.y+40,5,10,"#64748b");
-  rect(p.x+42,p.y+40,5,10,"#64748b");
-  rect(p.x-48,p.y-25,96,5,"#8babc2");
-  text(p.name,p.x,p.y-35,12);
-  if(p.done){
-   text("✔ 완료",p.x,p.y+70,15,"#16875d");
-  }else{
-   text(p.icon,p.x+47,p.y-10,19);
-   text("미션!",p.x,p.y+70,12,"#b45309");
-  }
+ [65,340,615].forEach(x=>{
+  box(x,88,120,94,"#967b61");
+  box(x+5,93,110,84,"#b8e1df");
+  box(x+57,93,5,84,"#fff0d4");
+  box(x+5,132,110,5,"#fff0d4");
+  box(x+5,93,110,5,"#fff0d4");
+  // 커튼
+  box(x-7,85,17,95,"#e8b7b0");
+  box(x+110,85,17,95,"#e8b7b0");
+  box(x+2,85,9,12,"#d99898");
+  box(x+110,85,9,12,"#d99898");
  });
 
- // 간호사 스테이션
- rect(225,395,190,45,"#b58c6b");
- rect(235,385,170,15,"#e7c5a0");
- text("👩‍⚕️ NURSE STATION",320,423,14,"#ffffff");
+ // 벽 시계
+ box(750,92,35,35,"#f6e9cf");
+ ctx.strokeStyle="#8b826d";ctx.lineWidth=3;
+ ctx.beginPath();ctx.arc(767,109,15,0,Math.PI*2);ctx.stroke();
+ line(766,98,2,12,"#655e50");
+ line(766,109,9,2,"#655e50");
 
- // 화분
- text("🪴",25,380,28);
- text("🪴",615,380,28);
- text("🧸",40,210,24);
- text("🧴",600,205,24);
+ // 바닥 러그
+ box(285,430,230,115,"#b9a58b");
+ box(292,437,216,101,"#e7d8bd");
+ box(300,445,200,85,"#c6b3a1");
+ box(315,460,170,55,"#e5d4ba");
+ label("NURSE STATION",400,490,15,"#776654");
+
+ if(wardLevel>=2){
+  box(305,451,190,3,"#b58770");
+  label("✿",325,477,18,"#c48d86");
+  label("✿",475,477,18,"#c48d86");
+ }
+ if(wardLevel>=3){
+  label("♡",325,520,18,"#d99d9c");
+  label("♡",475,520,18,"#d99d9c");
+ }
+}
+
+// ----- 침대 -----
+function drawBed(p){
+ const x=p.x,y=p.y;
+ // 침대 그림자와 프레임
+ box(x-74,y+31,148,13,"#87958a");
+ box(x-70,y-12,140,57,"#a3b5a3");
+ box(x-65,y-8,130,46,"#faf2df");
+ // 베개
+ box(x-58,y-3,38,24,"#fffaf0");
+ box(x-56,y-1,34,20,"#eee4d3");
+ // 이불
+ box(x-17,y-3,79,37,p.cloth);
+ box(x-17,y-3,79,6,lighten(p.cloth));
+ // 이불 무늬
+ for(let i=0;i<4;i++)box(x-10+i*18,y+8,7,5,"#ffffff55");
+ // 침대 다리
+ box(x-65,y+42,7,15,"#7e8b7d");
+ box(x+58,y+42,7,15,"#7e8b7d");
+ // 헤드
+ box(x-74,y-21,10,65,"#9b9d86");
+ box(x+64,y-21,10,65,"#9b9d86");
+ // 협탁
+ box(x+79,y+3,37,43,"#b9906c");
+ box(x+83,y+8,29,8,"#d8b48b");
+ box(x+83,y+27,29,14,"#9c7859");
+ box(x+89,y+30,5,4,"#e7d4ad");
+ // 수액 거치대
+ box(x-88,y-62,4,70,"#899b92");
+ box(x-96,y-65,20,4,"#899b92");
+ box(x-97,y-59,21,24,"#d2e8df");
+ box(x-91,y-54,9,13,"#a2d2db");
+ box(x-90,y-35,2,35,"#a0aaa0");
+ // 작은 식물
+ box(x+88,y-22,20,22,"#c58e70");
+ box(x+95,y-39,5,19,"#6d9b72");
+ box(x+87,y-34,10,9,"#78a97c");
+ box(x+99,y-36,10,9,"#83ad76");
+}
+
+function lighten(hex){
+ const n=parseInt(hex.slice(1),16);
+ const r=Math.min(255,((n>>16)&255)+30);
+ const g=Math.min(255,((n>>8)&255)+30);
+ const b=Math.min(255,(n&255)+30);
+ return `rgb(${r},${g},${b})`;
+}
+
+// ----- 사람 캐릭터 -----
+function drawPerson(p){
+ const x=p.x,y=p.y-18;
+ // 몸과 팔
+ box(x-17,y+10,34,27,p.cloth);
+ box(x-20,y+14,7,20,p.skin);
+ box(x+13,y+14,7,20,p.skin);
+ box(x-12,y+35,9,10,"#6e6b68");
+ box(x+4,y+35,9,10,"#6e6b68");
+ // 목과 얼굴
+ box(x-5,y+4,10,10,p.skin);
+ box(x-13,y-16,26,25,p.skin);
+ // 헤어 스타일
+ if(p.hairStyle===0){
+  box(x-15,y-21,30,12,p.hair);
+  box(x-15,y-12,6,20,p.hair);
+  box(x+9,y-12,6,20,p.hair);
+  box(x-12,y-25,22,6,p.hair);
+ }else if(p.hairStyle===1){
+  box(x-15,y-21,30,12,p.hair);
+  box(x-15,y-11,6,9,p.hair);
+  box(x+9,y-11,6,9,p.hair);
+ }else if(p.hairStyle===2){
+  box(x-15,y-23,30,13,p.hair);
+  box(x-15,y-12,7,23,p.hair);
+  box(x+8,y-12,7,23,p.hair);
+  box(x-9,y-28,19,7,p.hair);
+ }else{
+  box(x-15,y-22,30,13,p.hair);
+  box(x-15,y-11,7,20,p.hair);
+  box(x+8,y-11,7,20,p.hair);
+  box(x-10,y-27,20,7,p.hair);
+ }
+ // 얼굴
+ box(x-8,y-5,4,4,"#514237");
+ box(x+5,y-5,4,4,"#514237");
+ box(x-3,y+3,6,2,"#ba7770");
+ // 이름
+ label(p.name,x,y+62,12,"#645d4f");
 }
 
 function drawNurse(){
  const x=nurse.x,y=nurse.y;
-
+ const cloth=uniforms[uniform].color;
  // 그림자
- rect(x-12,y+18,26,6,"#a9b9a5");
-
+ box(x-15,y+20,30,6,"#a5ae94");
  // 다리
- rect(x-9,y+8,7,13,"#405b77");
- rect(x+3,y+8,7,13,"#405b77");
-
+ box(x-10,y+8,8,16,"#52657b");
+ box(x+3,y+8,8,16,"#52657b");
+ box(x-11,y+21,10,5,"#4e4c48");
+ box(x+3,y+21,10,5,"#4e4c48");
  // 몸
- rect(x-13,y-13,27,24,"#ffffff");
- rect(x-8,y-11,16,18,"#65b9c0");
- rect(x-2,y-9,5,11,"#ffffff");
-
+ box(x-16,y-15,32,27,cloth);
+ box(x-4,y-13,8,25,"#fff7e8");
+ box(x-2,y-8,4,6,"#ce7775");
+ // 팔
+ box(x-20,y-12,6,22,"#f0c6a5");
+ box(x+14,y-12,6,22,"#f0c6a5");
+ // 얼굴
+ box(x-12,y-40,24,25,"#efc4a2");
  // 머리
- rect(x-11,y-32,23,20,"#f2c5a4");
- rect(x-13,y-37,26,10,"#654c39");
- rect(x-11,y-27,4,5,"#654c39");
- rect(x+7,y-27,4,5,"#654c39");
-
- // 눈
- rect(x-6,y-25,3,3,"#333333");
- rect(x+4,y-25,3,3,"#333333");
-
+ box(x-14,y-46,28,12,"#68442f");
+ box(x-14,y-38,6,22,"#68442f");
+ box(x+8,y-38,6,22,"#68442f");
+ box(x-10,y-51,20,7,"#68442f");
+ // 눈과 입
+ box(x-7,y-30,3,3,"#47382d");
+ box(x+4,y-30,3,3,"#47382d");
+ box(x-2,y-22,5,2,"#b9706c");
  // 간호사 모자
- rect(x-10,y-40,20,6,"#ffffff");
- rect(x-2,y-39,4,4,"#ef7777");
-
- text("하영",x,y+33,11,"#334155");
+ box(x-12,y-52,24,7,"#fffaf0");
+ box(x-2,y-51,4,5,"#df7479");
+ // 이름표
+ box(x+7,y-8,7,8,"#fff6dc");
+ label("하영",x,y+43,12,"#665c4e");
 }
 
+// ----- 병동 전체 -----
 function draw(){
- drawRoom();
+ ctx.clearRect(0,0,W,H);
+ drawFloor();
+
+ // 병상 위치
+ patients.forEach(p=>{
+  drawBed(p);
+  drawPerson(p);
+  if(p.done){
+   box(p.x+42,p.y-62,20,20,"#8ab38b");
+   label("✓",p.x+52,p.y-47,16,"white");
+  }
+ });
+
+ // 중앙 간호사 카트
+ box(344,350,112,52,"#b48a68");
+ box(351,343,98,12,"#e3c7a1");
+ box(355,370,90,22,"#d4b18a");
+ box(357,395,7,9,"#6b776c");
+ box(437,395,7,9,"#6b776c");
+ box(370,350,8,8,"#f5e8cf");
+ box(387,350,8,8,"#e5b6a6");
+ box(405,350,8,8,"#9ec8d2");
+ label("간호 카트",400,420,12,"#655d4c");
+
+ // 하영이와 상호작용
+ const p=nearest();
+ if(p){
+  ctx.strokeStyle="#d7a74d";
+  ctx.lineWidth=3;
+  ctx.strokeRect(p.x-78,p.y-77,156,125);
+ }
  drawNurse();
 
- // 가까운 환자 강조
- const p=nearest();
- if(p&&!p.done){
-  ctx.strokeStyle="#f59e0b";
-  ctx.lineWidth=3;
-  ctx.strokeRect(p.x-53,p.y-28,106,82);
+ // 환자 말풍선
+ if(activeBubble && Date.now()<activeBubble.until){
+  const p=activeBubble.person;
+  speech(p.x,p.y-92,activeBubble.text,activeBubble.color||"#fff8e9");
  }
+
+ // 하영이 말풍선
+ if(Date.now()<dialogueCooldown){
+  speech(nurse.x,nurse.y-78,"퇴근하고 싶다...", "#fff0d6");
+ }
+
+ // 작은 장식
+ label("✿",35,260,23,"#c48d86");
+ label("✿",765,260,23,"#c48d86");
+ label("♡",45,470,19,"#d99d9c");
+ label("♡",755,470,19,"#d99d9c");
 }
+
+function speech(x,y,str,color){
+ ctx.font="bold 13px Arial";
+ const width=Math.min(220,Math.max(100,ctx.measureText(str).width+22));
+ const bx=Math.max(10,Math.min(W-width-10,x-width/2));
+ const by=Math.max(78,y-25);
+ box(bx+3,by+3,width,29,"#9b9684");
+ box(bx,by,width,27,color);
+ ctx.strokeStyle="#a28d72";
+ ctx.lineWidth=2;
+ ctx.strokeRect(bx,by,width,27);
+ box(x-4,by+26,8,7,color);
+ label(str,bx+width/2,by+18,12,"#5d5549");
+}
+
+// ----- 환자 말풍선 랜덤 -----
+function randomBubble(){
+ if(!running||activeBubble)return;
+ const available=patients.filter(p=>!p.done);
+ if(!available.length)return;
+
+ const p=available[Math.floor(Math.random()*available.length)];
+ const msg=p.lines[Math.floor(Math.random()*p.lines.length)];
+
+ activeBubble={
+  person:p,
+  text:msg,
+  until:Date.now()+3500
+ };
+}
+setInterval(()=>{
+ if(running && !activeBubble && Math.random()<.7)randomBubble();
+ if(activeBubble && Date.now()>activeBubble.until)activeBubble=null;
+},1000);
 
 function nearest(){
  let best=null,dist=Infinity;
  patients.forEach(p=>{
   const d=Math.hypot(p.x-nurse.x,p.y-nurse.y);
-  if(d<65&&d<dist&&!p.done){best=p;dist=d;}
+  if(!p.done&&d<INTERACTION_DISTANCE&&d<dist){best=p;dist=d;}
  });
  return best;
 }
 
 function updateMission(){
- const done=patients.filter(p=>p.done).length;
  const p=nearest();
- if(done===patients.length){
-  $("mission").innerHTML="🎉 <strong>모든 환자를 돌봤어요! 대단해요 하영 간호사!</strong>";
- }else if(p){
-  $("mission").innerHTML="👩‍⚕️ <strong>"+p.name+"</strong><br>"+p.icon+" "+p.task+" — 간호하기 버튼을 누르세요!";
+ if(p){
+  $("mission").innerHTML="💬 <strong>"+p.name+"</strong>: 저 좀 봐주세요~!<br>오늘의 간호: "+p.task+" · 간호하기를 눌러주세요.";
  }else{
-  $("mission").innerHTML="📋 <strong>간호 미션</strong><br>가까운 환자에게 다가가 간호하기 버튼을 눌러주세요!";
+  $("mission").innerHTML="🌿 병동을 돌아다니며 환자들의 상태를 살펴보세요. 환자들이 하영이를 찾고 있어요!";
  }
+}
+
+// ----- 간호 미니게임 -----
+function miniGame(p){
+ const d=document.createElement("div");
+ d.className="overlay";
+ const qs={
+  temp:["정상 성인의 일반적인 체온은?",["36.5~37.5℃","34~35℃","39~40℃"],0],
+  bp:["일반적인 성인의 정상 혈압에 가까운 것은?",["120/80 mmHg","180/110 mmHg","80/40 mmHg"],0],
+  pulse:["성인의 안정 시 일반적인 맥박은?",["60~100회/분","120~160회/분","30~40회/분"],0],
+  iv:["수액을 확인할 때 중요한 것은?",["처방·속도·주입부위","색깔만 확인","환자 나이만 확인"],0],
+  med:["투약 전 확인해야 할 기본 원칙은?",["대상자·약물·용량·경로·시간","약 색깔만 확인","다른 환자 약 사용"],0]
+ };
+ const q=qs[p.type];
+ d.innerHTML=`
+ <div class="dialog">
+ <h2>${p.type==="med"?"💊 약물 투여":"🩺 간호 사정"}</h2>
+ <p>${p.name}: 간호사님, 이것 좀 해주세요! 🥺</p>
+ <p><strong>${q[0]}</strong></p>
+ <div class="options" id="opts"></div>
+ <p class="small">간호 지식을 활용해 정답을 선택하세요.</p>
+ </div>`;
+ document.body.appendChild(d);
+
+ q[1].forEach((a,i)=>{
+  const b=document.createElement("button");
+  b.textContent=a;
+  b.onclick=()=>{
+   if(i===q[2]){
+    d.remove();
+    p.done=true;
+    completed++;
+    score+=100;
+    money+=10000;
+    level=Math.floor(score/200)+1;
+    $("score").textContent=score;
+    $("money").textContent=money.toLocaleString();
+    $("level").textContent=level;
+    tone(880,.2,.05);
+    $("mission").innerHTML="💗 <strong>"+p.name+": 고마워요, 간호사님!</strong><br>간호 업무 완료! +100점 · 월급 10,000원";
+    draw();
+    if(patients.every(v=>v.done))finish(true);
+   }else{
+    score=Math.max(0,score-30);
+    level=Math.floor(score/200)+1;
+    $("score").textContent=score;
+    $("level").textContent=level;
+    b.style.background="#b95c69";
+    $("mission").innerHTML="🥲 <strong>앗, 다시 공부해 봐요!</strong><br>30점 감점되었어요.";
+    tone(170,.3,.05);
+   }
+  };
+  d.querySelector("#opts").appendChild(b);
+ });
 }
 
 function interact(){
- if(!active)return;
+ if(!running)return;
  const p=nearest();
  if(!p){
-  $("mission").innerHTML="🔍 <strong>환자 가까이 이동해 주세요!</strong>";
+  $("mission").innerHTML="🔍 <strong>조금 더 가까이 가보세요!</strong><br>환자 침대 옆으로 이동해 주세요.";
   return;
  }
- p.done=true;
- score+=100;
- hp=Math.min(100,hp+5);
- level=Math.floor(score/300)+1;
- $("score").textContent=score;
- $("hp").textContent=hp;
- $("level").textContent=level;
-
- sound(880,.2,.05);
- setTimeout(()=>sound(1175,.2,.04),100);
- updateMission();
- draw();
-
- if(patients.every(p=>p.done))finish(true);
+ miniGame(p);
 }
 
-function move(){
- if(!active)return;
- let dx=0,dy=0;
- if(keys.left||keys.ArrowLeft||keys.a)dx=-1;
- if(keys.right||keys.ArrowRight||keys.d)dx=1;
- if(keys.up||keys.ArrowUp||keys.w)dy=-1;
- if(keys.down||keys.ArrowDown||keys.s)dy=1;
+// ----- 유니폼 -----
+function closet(){
+ const d=document.createElement("div");
+ d.className="overlay";
+ d.innerHTML=`
+ <div class="dialog">
+ <h2>👗 하영이의 옷장</h2>
+ <p>오늘은 어떤 간호복을 입을까요?</p>
+ <div class="options">
+ ${uniforms.map((u,i)=>`<button data-u="${i}" style="background:${u.color};color:#3f5044">${u.name}</button>`).join("")}
+ </div>
+ <button id="close">닫기</button>
+ </div>`;
+ document.body.appendChild(d);
+ d.querySelectorAll("[data-u]").forEach(b=>{
+  b.onclick=()=>{uniform=Number(b.dataset.u);draw()};
+ });
+ d.querySelector("#close").onclick=()=>d.remove();
+}
 
+// ----- 병동 확장 -----
+function ward(){
+ const d=document.createElement("div");
+ const requiredTasks=()=>wardLevel===1?3:4;
+ d.className="overlay";
+ d.innerHTML=`
+ <div class="dialog">
+ <h2>🏡 우리 병동 꾸미기</h2>
+ <p>현재 병동 레벨: ${wardLevel}<br>완료한 간호 업무: ${completed}개</p>
+ <p id="wardStatus">${wardLevel>=3?"병동이 최고 레벨이에요!":"간호 업무 "+requiredTasks()+"개를 완료하면 업그레이드할 수 있어요."}</p>
+ <button id="upgrade">병동 업그레이드</button>
+ <button id="close">닫기</button>
+ </div>`;
+ document.body.appendChild(d);
+ d.querySelector("#upgrade").onclick=()=>{
+  if(wardLevel>=3){
+   d.querySelector("#wardStatus").textContent="병동이 최고 레벨이에요!";
+   }else if(completed<requiredTasks()){
+    d.querySelector("#wardStatus").textContent="간호 업무 "+requiredTasks()+"개를 완료해야 해요. 현재 "+completed+"개 완료!";
+  }else{
+   wardLevel++;
+   draw();
+   d.querySelector(".dialog p").innerHTML="현재 병동 레벨: "+wardLevel+"<br>완료한 간호 업무: "+completed+"개";
+   d.querySelector("#wardStatus").textContent=wardLevel>=3
+    ?"병동이 최고 레벨이에요! 🌷"
+    :"새 장식이 추가되었어요! 간호 업무 "+requiredTasks()+"개 완료 후 다음 업그레이드가 가능해요.";
+   d.querySelector("#upgrade").textContent=wardLevel>=3?"최고 레벨":"다음 단계 업그레이드";
+  }
+ };
+ d.querySelector("#close").onclick=()=>d.remove();
+}
+
+// ----- 급여 -----
+function salary(){
+ const d=document.createElement("div");
+ d.className="overlay";
+ d.innerHTML=`
+ <div class="dialog">
+ <h2>👩‍⚕️ 수간호사 평가</h2>
+ <p>${completed>=5?"수간호사: 하영 간호사! 오늘 정말 최고였어요! 🌷":completed>=3?"수간호사: 수고했어요. 조금씩 성장하고 있네요!":"수간호사: 아직 배울 게 많지만 잘하고 있어요!"}</p>
+ <p>완료한 간호 업무: ${completed}개<br>보유 월급: ${money.toLocaleString()}원</p>
+ <button id="close">확인</button>
+ </div>`;
+ document.body.appendChild(d);
+ d.querySelector("#close").onclick=()=>d.remove();
+}
+
+$("closet").onclick=closet;
+$("ward").onclick=ward;
+$("salary").onclick=salary;
+
+// ----- 이동 -----
+function move(){
+ let dx=0,dy=0;
+ if(keys.left)dx=-1;
+ if(keys.right)dx=1;
+ if(keys.up)dy=-1;
+ if(keys.down)dy=1;
  if(dx&&dy){dx*=.707;dy*=.707}
- nurse.x=Math.max(25,Math.min(615,nurse.x+dx*nurse.speed));
- nurse.y=Math.max(145,Math.min(370,nurse.y+dy*nurse.speed));
+ nurse.x=Math.max(35,Math.min(765,nurse.x+dx*nurse.speed));
+ nurse.y=Math.max(245,Math.min(560,nurse.y+dy*nurse.speed));
  if(dx||dy)updateMission();
 }
 
 function loop(now){
- if(!active)return;
+ if(!running)return;
  const dt=Math.min((now-last)/16.67,2);
  last=now;
- const old=nurse.speed;
- nurse.speed=3.2*dt;
+ const speed=nurse.speed;
+ nurse.speed=3.6*dt;
  move();
- nurse.speed=old;
+ nurse.speed=speed;
+
+ // 가끔 하영이 속마음 등장
+ if(Date.now()>dialogueCooldown && Math.random()<.0015){
+  dialogueCooldown=Date.now()+2300;
+  activeBubble=null;
+ }
  draw();
  raf=requestAnimationFrame(loop);
 }
 
+// ----- 종료 및 시작 -----
 function finish(all=false){
- if(!active)return;
- active=false;
+ if(!running)return;
+ running=false;
  cancelAnimationFrame(raf);
- stopMusic();
  clearInterval(timer);
- $("title").textContent=all?"🏆 오늘의 간호 미션 완료!":"🌙 근무 종료!";
- $("description").innerHTML=
- "오늘의 점수: <b style='color:#a7f3d0'>"+score+"점</b><br>"+
- "달성 레벨: "+level+"<br><br>"+
- (all?"모든 환자를 돌봤어요! 훌륭한 간호사예요!":"수고했어요! 다음 근무도 파이팅!");
- $("begin").textContent="다시 출근하기";
+ musicStop();
+ const bonus=all?50000:0;
+ money+=bonus;
+ $("money").textContent=money.toLocaleString();
+ $("dialogTitle").textContent=all?"🌷 오늘의 간호왕!":"🌙 퇴근이다!";
+ $("dialogText").innerHTML=
+ (all?"수간호사: 하영 간호사! 오늘 완벽했어요! 💗":"하영이: 드디어 퇴근이다... 살았다... 🥹")+
+ "<br><br>오늘의 점수: "+score+"점<br>완료 업무: "+completed+"개<br>퇴근 보너스: "+bonus.toLocaleString()+"원<br>총 월급: "+money.toLocaleString()+"원";
+ $("dialogStart").textContent="다시 출근하기";
  $("overlay").classList.remove("hidden");
 }
 
 function start(){
  initAudio();
- stopMusic();
+ musicStop();
  clearInterval(timer);
  cancelAnimationFrame(raf);
-
  patients.forEach(p=>p.done=false);
- nurse.x=310;nurse.y=340;
- score=0;hp=100;level=1;time=90;
+ nurse.x=400;nurse.y=485;
+ score=0;level=1;time=90;completed=0;
+ activeBubble=null;dialogueCooldown=0;
  $("score").textContent=0;
- $("hp").textContent=100;
  $("level").textContent=1;
- $("time").textContent=90;
-
- active=true;
+ $("time").textContent="90초";
+ $("money").textContent=money.toLocaleString();
+ running=true;
  last=performance.now();
  $("overlay").classList.add("hidden");
  updateMission();
  draw();
- startMusic();
+ musicStart();
  raf=requestAnimationFrame(loop);
-
  timer=setInterval(()=>{
-  if(!active)return;
+  if(!running)return;
   time--;
-  $("time").textContent=time;
+  $("time").textContent=time+"초";
   if(time<=0)finish();
  },1000);
 }
 
-$("begin").onclick=start;
 $("start").onclick=start;
+$("dialogStart").onclick=start;
 $("interact").onclick=interact;
-$("music").onclick=()=>{
- musicOn=!musicOn;
- $("music").textContent=musicOn?"🎵 ON":"🔇 OFF";
- if(musicOn){initAudio();startMusic()}
- else stopMusic();
-};
 
+// 키보드
+const keyMap={
+ ArrowLeft:"left",ArrowRight:"right",
+ ArrowUp:"up",ArrowDown:"down",
+ a:"left",d:"right",w:"up",s:"down",
+ A:"left",D:"right",W:"up",S:"down"
+};
 document.addEventListener("keydown",e=>{
- const map={
-  ArrowLeft:"left",ArrowRight:"right",
-  ArrowUp:"up",ArrowDown:"down",
-  a:"left",d:"right",w:"up",s:"down"
- };
- if(map[e.key]){
-  e.preventDefault();keys[map[e.key]]=true;
+ if(keyMap[e.key]){
+  e.preventDefault();
+  keys[keyMap[e.key]]=true;
  }
- if(e.key==="e"||e.key==="Enter")interact();
+ if(e.key.toLowerCase()==="e")interact();
 });
 document.addEventListener("keyup",e=>{
- const map={
-  ArrowLeft:"left",ArrowRight:"right",
-  ArrowUp:"up",ArrowDown:"down",
-  a:"left",d:"right",w:"up",s:"down"
- };
- if(map[e.key])keys[map[e.key]]=false;
+ if(keyMap[e.key])keys[keyMap[e.key]]=false;
 });
+window.addEventListener("blur",()=>Object.keys(keys).forEach(key=>keys[key]=false));
 
-document.querySelectorAll("[data-dir]").forEach(btn=>{
- const dir=btn.dataset.dir;
- btn.addEventListener("pointerdown",e=>{
-  e.preventDefault();keys[dir]=true;
+// 모바일 버튼
+document.querySelectorAll("[data-dir]").forEach(b=>{
+ const dir=b.dataset.dir;
+ b.addEventListener("pointerdown",e=>{
+  e.preventDefault();
+  keys[dir]=true;
+  b.setPointerCapture(e.pointerId);
  });
- ["pointerup","pointercancel","pointerleave"].forEach(ev=>{
-  btn.addEventListener(ev,()=>keys[dir]=false);
+ ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>{
+  b.addEventListener(ev,()=>keys[dir]=false);
  });
 });
 
